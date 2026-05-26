@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: ./backend
+    container_name: bragstack-api
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+    depends_on:
+      - mongo
+    volumes:
+      - ./backend/app:/app/app
+
+  mongo:
+    image: mongo:7
+    container_name: bragstack-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - bragstack_mongo_data:/data/db
+
+volumes:
+  bragstack_mongo_data:
