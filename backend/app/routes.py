@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.database import entries_collection
 from app.models import BragEntryCreate
@@ -57,14 +57,43 @@ def create_entry(entry: BragEntryCreate):
     return serialize_entry(created_entry)
 
 @router.get("")
-def list_entries():
-    """List all brag entries."""
+def list_entries(
+    limit: int = Query(default=10, ge=1, le=100),
+    skip: int = Query(default=0, ge=0),
+):
+    """List brag entries with pagination.
+
+    Args:
+        limit: Maximum number of entries to return.
+        skip: Number of entries to skip.
+
+    Returns:
+        Paginated list of brag entries.
+    """
+    query = {"user_id": "demo-user"}
+
+    total_entries = entries_collection.count_documents(query)
+
     entries = []
 
-    for entry in entries_collection.find({"user_id": "demo-user"}).sort("created_at", -1):
+    cursor = (
+        entries_collection.find(query)
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    )
+
+    for entry in cursor:
         entries.append(serialize_entry(entry))
 
-    return {"entries": entries}
+    return {
+        "total_entries": total_entries,
+        "limit": limit,
+        "skip": skip,
+        "returned_entries": len(entries),
+        "has_more": skip + limit < total_entries,
+        "entries": entries,
+    }
 
 # Reports
 
