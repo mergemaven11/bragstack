@@ -11,7 +11,7 @@ router = APIRouter(prefix="/entries", tags=["entries"])
 
 
 def generate_resume_bullet(entry: BragEntryCreate) -> str:
-    """Generate a simple resume bullet from a brag entry.
+    """Generate a polished resume bullet from a brag entry.
 
     Args:
         entry: The brag entry submitted by the user.
@@ -22,8 +22,9 @@ def generate_resume_bullet(entry: BragEntryCreate) -> str:
     tags = ", ".join(entry.tags) if entry.tags else entry.category
 
     return (
-        f"Resolved {entry.category.lower()} issue involving {tags} by "
-        f"{entry.action[0].lower() + entry.action[1:]} Result: {entry.impact}"
+        f"Troubleshot {entry.category.lower()} work involving {tags}. "
+        f"Actions taken: {entry.action}. "
+        f"Impact: {entry.impact}."
     )
 
 
@@ -139,6 +140,36 @@ def get_tags_summary():
             "No tags found yet. Add entries with skill tags to build your skill summary."
             if not sorted_tag_counts
             else "Tag summary generated successfully."
+        ),
+    }
+
+
+@router.get("/categories/summary")
+def get_categories_summary():
+    """Generate a summary of all categories across brag entries.
+
+    Returns:
+        Dictionary containing category names and their usage counts.
+    """
+    entries = entries_collection.find({"user_id": "demo-user"})
+
+    category_counts = {}
+
+    for entry in entries:
+        category = entry.get("category", "Uncategorized")
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    sorted_category_counts = dict(
+        sorted(category_counts.items(), key=lambda item: item[1], reverse=True)
+    )
+
+    return {
+        "total_unique_categories": len(sorted_category_counts),
+        "categories": sorted_category_counts,
+        "message": (
+            "No categories found yet. Add entries to build your category summary."
+            if not sorted_category_counts
+            else "Category summary generated successfully."
         ),
     }
 
