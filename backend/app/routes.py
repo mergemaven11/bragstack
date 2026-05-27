@@ -55,7 +55,6 @@ def create_entry(entry: BragEntryCreate):
 
     return serialize_entry(created_entry)
 
-
 @router.get("")
 def list_entries():
     """List all brag entries."""
@@ -66,6 +65,82 @@ def list_entries():
 
     return {"entries": entries}
 
+# Reports
+
+@router.get("/reports/weekly")
+def get_weekly_report():
+    """Generate a weekly report from recent brag entries.
+
+    Returns:
+        Summary of brag entries created in the last 7 days.
+    """
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+
+    entries = list(
+        entries_collection.find(
+            {
+                "user_id": "demo-user",
+                "created_at": {"$gte": seven_days_ago},
+            }
+        ).sort("created_at", -1)
+    )
+
+    total_entries = len(entries)
+    categories = {}
+    tags = {}
+    resume_bullets = []
+
+    for entry in entries:
+        category = entry.get("category", "Uncategorized")
+        categories[category] = categories.get(category, 0) + 1
+
+        for tag in entry.get("tags", []):
+            tags[tag] = tags.get(tag, 0) + 1
+
+        if entry.get("resume_bullet"):
+            resume_bullets.append(entry["resume_bullet"])
+
+    return {
+        "period": "last_7_days",
+        "total_entries": total_entries,
+        "categories": categories,
+        "top_tags": tags,
+        "resume_bullets": resume_bullets,
+        "message": (
+            "No entries yet this week. Add a brag entry to start tracking your wins."
+            if total_entries == 0
+            else "Weekly report generated successfully."
+        ),
+    }
+
+@router.get("/tags/summary")
+def get_tags_summary():
+    """Generate a summary of all skill tags across brag entries.
+
+    Returns:
+        Dictionary containing tag names and their usage counts.
+    """
+    entries = entries_collection.find({"user_id": "demo-user"})
+
+    tag_counts = {}
+
+    for entry in entries:
+        for tag in entry.get("tags", []):
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+
+    sorted_tag_counts = dict(
+        sorted(tag_counts.items(), key=lambda item: item[1], reverse=True)
+    )
+
+    return {
+        "total_unique_tags": len(sorted_tag_counts),
+        "tags": sorted_tag_counts,
+        "message": (
+            "No tags found yet. Add entries with skill tags to build your skill summary."
+            if not sorted_tag_counts
+            else "Tag summary generated successfully."
+        ),
+    }
 
 @router.get("/{entry_id}")
 def get_entry(entry_id: str):
@@ -84,6 +159,7 @@ def get_entry(entry_id: str):
         raise HTTPException(status_code=404, detail="Entry not found")
 
     return serialize_entry(entry)
+
 
 
 @router.delete("/{entry_id}")
@@ -142,50 +218,3 @@ def update_entry(entry_id: str, entry: BragEntryCreate):
 
     return serialize_entry(updated_entry)
 
-# Reports
-
-@router.get("/reports/weekly")
-def get_weekly_report():
-    """Generate a weekly report from recent brag entries.
-
-    Returns:
-        Summary of brag entries created in the last 7 days.
-    """
-    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
-
-    entries = list(
-        entries_collection.find(
-            {
-                "user_id": "demo-user",
-                "created_at": {"$gte": seven_days_ago},
-            }
-        ).sort("created_at", -1)
-    )
-
-    total_entries = len(entries)
-    categories = {}
-    tags = {}
-    resume_bullets = []
-
-    for entry in entries:
-        category = entry.get("category", "Uncategorized")
-        categories[category] = categories.get(category, 0) + 1
-
-        for tag in entry.get("tags", []):
-            tags[tag] = tags.get(tag, 0) + 1
-
-        if entry.get("resume_bullet"):
-            resume_bullets.append(entry["resume_bullet"])
-
-    return {
-        "period": "last_7_days",
-        "total_entries": total_entries,
-        "categories": categories,
-        "top_tags": tags,
-        "resume_bullets": resume_bullets,
-        "message": (
-            "No entries yet this week. Add a brag entry to start tracking your wins."
-            if total_entries == 0
-            else "Weekly report generated successfully."
-        ),
-    }
