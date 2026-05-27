@@ -173,6 +173,45 @@ def get_categories_summary():
         ),
     }
 
+@router.get("/search")
+def search_entries(query: str):
+    """Search brag entries by keyword.
+
+    Args:
+        query: Search term used to find matching brag entries.
+
+    Returns:
+        Matching brag entries.
+    """
+    search_filter = {
+        "user_id": "demo-user",
+        "$or": [
+            {"title": {"$regex": query, "$options": "i"}},
+            {"category": {"$regex": query, "$options": "i"}},
+            {"situation": {"$regex": query, "$options": "i"}},
+            {"action": {"$regex": query, "$options": "i"}},
+            {"impact": {"$regex": query, "$options": "i"}},
+            {"lesson": {"$regex": query, "$options": "i"}},
+            {"tags": {"$regex": query, "$options": "i"}},
+        ],
+    }
+
+    entries = []
+
+    for entry in entries_collection.find(search_filter).sort("created_at", -1):
+        entries.append(serialize_entry(entry))
+
+    return {
+        "query": query,
+        "total_results": len(entries),
+        "entries": entries,
+        "message": (
+            "No matching entries found."
+            if not entries
+            else "Search completed successfully."
+        ),
+    }
+
 @router.get("/{entry_id}")
 def get_entry(entry_id: str):
     """Get a single brag entry by ID."""
@@ -192,24 +231,6 @@ def get_entry(entry_id: str):
     return serialize_entry(entry)
 
 
-
-@router.delete("/{entry_id}")
-def delete_entry(entry_id: str):
-    """Delete a brag entry by ID."""
-    if not ObjectId.is_valid(entry_id):
-        raise HTTPException(status_code=400, detail="Invalid entry ID")
-
-    result = entries_collection.delete_one(
-        {
-            "_id": ObjectId(entry_id),
-            "user_id": "demo-user",
-        }
-    )
-
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Entry not found")
-
-    return {"message": "Entry deleted"}
 
 @router.put("/{entry_id}")
 def update_entry(entry_id: str, entry: BragEntryCreate):
@@ -248,4 +269,24 @@ def update_entry(entry_id: str, entry: BragEntryCreate):
     )
 
     return serialize_entry(updated_entry)
+
+
+
+@router.delete("/{entry_id}")
+def delete_entry(entry_id: str):
+    """Delete a brag entry by ID."""
+    if not ObjectId.is_valid(entry_id):
+        raise HTTPException(status_code=400, detail="Invalid entry ID")
+
+    result = entries_collection.delete_one(
+        {
+            "_id": ObjectId(entry_id),
+            "user_id": "demo-user",
+        }
+    )
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Entry not found")
+
+    return {"message": "Entry deleted"}
 
