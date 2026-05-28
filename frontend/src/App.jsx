@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
+
+import PublicBragPage from "./PublicBragPage";
+
 import {
   createEntry,
   deleteEntry,
@@ -11,6 +14,29 @@ import {
 } from "./api";
 import "./App.css";
 
+const ENTRY_TYPES = [
+  "Current Job",
+  "Previous Job",
+  "Personal Development",
+  "Side Project",
+  "Open Source",
+  "Learning / Certification",
+];
+
+const getTodayDate = () => new Date().toISOString().slice(0, 10);
+
+const EMPTY_FORM = {
+  title: "",
+  category: "",
+  entry_date: getTodayDate(),
+  entry_type: "Current Job",
+  situation: "",
+  action: "",
+  impact: "",
+  lesson: "",
+  tags: "",
+};
+
 function App() {
   const [entries, setEntries] = useState([]);
   const [weeklyReport, setWeeklyReport] = useState(null);
@@ -20,16 +46,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState(null);
-
-  const [formData, setFormData] = useState({
-    title: "",
-    category: "",
-    situation: "",
-    action: "",
-    impact: "",
-    lesson: "",
-    tags: "",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   async function loadDashboard() {
     try {
@@ -58,35 +75,41 @@ function App() {
 
   function openCreateModal() {
     setEditingEntryId(null);
+
     setFormData({
-      title: "",
-      category: "",
-      situation: "",
-      action: "",
-      impact: "",
-      lesson: "",
-      tags: "",
+      ...EMPTY_FORM,
+      entry_date: getTodayDate(),
     });
+
     setIsModalOpen(true);
   }
 
   function openEditModal(entry) {
     setEditingEntryId(entry.id);
+
     setFormData({
       title: entry.title ?? "",
       category: entry.category ?? "",
+      entry_date: entry.entry_date ?? getTodayDate(),
+      entry_type: entry.entry_type ?? "Current Job",
       situation: entry.situation ?? "",
       action: entry.action ?? "",
       impact: entry.impact ?? "",
       lesson: entry.lesson ?? "",
       tags: entry.tags?.join(", ") ?? "",
     });
+
     setIsModalOpen(true);
   }
 
   function closeModal() {
     setIsModalOpen(false);
     setEditingEntryId(null);
+
+    setFormData({
+      ...EMPTY_FORM,
+      entry_date: getTodayDate(),
+    });
   }
 
   function handleInputChange(event) {
@@ -118,17 +141,6 @@ function App() {
       }
 
       closeModal();
-
-      setFormData({
-        title: "",
-        category: "",
-        situation: "",
-        action: "",
-        impact: "",
-        lesson: "",
-        tags: "",
-      });
-
       await loadDashboard();
     } catch (err) {
       console.error(err);
@@ -154,6 +166,12 @@ function App() {
   }
 
   const topTags = tagsSummary?.tags ? Object.entries(tagsSummary.tags) : [];
+
+  const isPublicPage = window.location.pathname.startsWith("/brag");
+
+  if (isPublicPage) {
+    return <PublicBragPage />;
+  }
 
   return (
     <main className="page">
@@ -278,7 +296,11 @@ function App() {
                 <article className="entry-card" key={entry.id}>
                   <div className="entry-top">
                     <div>
-                      <p className="mini-label">{entry.category}</p>
+                      <p className="mini-label">
+                        {entry.category}
+                        {entry.entry_type ? ` • ${entry.entry_type}` : ""}
+                        {entry.entry_date ? ` • ${entry.entry_date}` : ""}
+                      </p>
                       <h3>{entry.title}</h3>
                     </div>
 
@@ -288,8 +310,9 @@ function App() {
                         className="icon-action"
                         onClick={() => openEditModal(entry)}
                         aria-label="Edit entry"
+                        title="Edit entry"
                       >
-                        <Pencil size={16} />
+                        <Pencil size={17} strokeWidth={2.4} />
                       </button>
 
                       <button
@@ -349,7 +372,9 @@ function App() {
                   {editingEntryId ? "Edit Proof" : "Create Proof"}
                 </p>
                 <h2>
-                  {editingEntryId ? "Update brag entry" : "Add a new brag entry"}
+                  {editingEntryId
+                    ? "Update brag entry"
+                    : "Add a new brag entry"}
                 </h2>
               </div>
 
@@ -384,6 +409,35 @@ function App() {
                     placeholder="Docker"
                     required
                   />
+                </label>
+              </div>
+
+              <div className="form-row">
+                <label>
+                  Entry Date
+                  <input
+                    type="date"
+                    name="entry_date"
+                    value={formData.entry_date}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Entry Type
+                  <select
+                    name="entry_type"
+                    value={formData.entry_type}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    {ENTRY_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
 
@@ -441,7 +495,11 @@ function App() {
               </label>
 
               <div className="modal-footer">
-                <button type="button" className="btn secondary" onClick={closeModal}>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={closeModal}
+                >
                   Cancel
                 </button>
 
