@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 
+import AuthPage from "./AuthPage";
 import PublicBragPage from "./PublicBragPage";
 
 import {
   createEntry,
   deleteEntry,
   getCategoriesSummary,
+  getCurrentUser,
   getEntries,
   getTagsSummary,
   getWeeklyReport,
+  loginUser,
+  registerUser,
   updateEntry,
 } from "./api";
 import "./App.css";
@@ -38,6 +42,7 @@ const EMPTY_FORM = {
 };
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(null);
   const [entries, setEntries] = useState([]);
   const [weeklyReport, setWeeklyReport] = useState(null);
   const [tagsSummary, setTagsSummary] = useState(null);
@@ -47,17 +52,24 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  
+  const path = window.location.pathname;
+  const isPublicPage = path.startsWith("/brag");
+  const isLoginPage = path === "/login";
+  const isRegisterPage = path === "/register";
 
   async function loadDashboard() {
     try {
-      const [entriesData, weeklyData, tagsData, categoriesData] =
+      const [userData, entriesData, weeklyData, tagsData, categoriesData] =
         await Promise.all([
+          getCurrentUser(),
           getEntries(),
           getWeeklyReport(),
           getTagsSummary(),
           getCategoriesSummary(),
         ]);
 
+      setCurrentUser(userData);
       setEntries(entriesData.entries ?? []);
       setWeeklyReport(weeklyData);
       setTagsSummary(tagsData);
@@ -65,13 +77,26 @@ function App() {
       setIsOffline(false);
     } catch (err) {
       console.error(err);
+
+      if (err.response?.status === 401) {
+        localStorage.removeItem("bragstack_token");
+        window.location.href = "/login";
+        return;
+      }
+
       setIsOffline(true);
     }
   }
 
   useEffect(() => {
+    const token = localStorage.getItem("bragstack_token");
+
+    if (isPublicPage || isLoginPage || isRegisterPage || !token) {
+      return;
+    }
+
     loadDashboard();
-  }, []);
+}, [isPublicPage, isLoginPage, isRegisterPage]);
 
   function openCreateModal() {
     setEditingEntryId(null);
@@ -167,10 +192,37 @@ function App() {
 
   const topTags = tagsSummary?.tags ? Object.entries(tagsSummary.tags) : [];
 
-  const isPublicPage = window.location.pathname.startsWith("/brag");
+
+  async function handleLogin(credentials) {
+    const data = await loginUser(credentials);
+    localStorage.setItem("bragstack_token", data.access_token);
+    window.location.href = "/";
+  }
+
+  async function handleRegister(user) {
+    const data = await registerUser(user);
+    localStorage.setItem("bragstack_token", data.access_token);
+    window.location.href = "/";
+  }
 
   if (isPublicPage) {
     return <PublicBragPage />;
+  }
+
+  if (isLoginPage) {
+    return <AuthPage mode="login" onLogin={handleLogin} />;
+  }
+
+
+  if (isRegisterPage) {
+    return <AuthPage mode="register" onRegister={handleRegister} />;
+  }
+
+  const token = localStorage.getItem("bragstack_token");
+
+  if (!token) {
+    window.location.href = "/login";
+    return null;
   }
 
   return (
@@ -209,7 +261,9 @@ function App() {
 
           <div className="avatar">T</div>
 
-          <h2>Tee’s BragStack</h2>
+          <h2>
+            {currentUser?.name ? `${currentUser.name}'s BragStack` : "Your BragStack"}
+          </h2>
           <p>
             Docker support engineer, backend builder, and SaaS
             founder-in-progress.
@@ -267,10 +321,23 @@ function App() {
           <h2>Manage your proof</h2>
         </div>
 
-        <button className="btn primary icon-btn" onClick={openCreateModal}>
-          <Plus size={18} />
-          New Entry
-        </button>
+        <div className="toolbar-actions">
+          <button
+            className="btn secondary"
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("bragstack_token");
+              window.location.href = "/login";
+            }}
+          >
+            Logout
+          </button>
+
+          <button className="btn primary icon-btn" onClick={openCreateModal}>
+            <Plus size={18} />
+            New Entry
+          </button>
+        </div>
       </section>
 
       <section className="dashboard-grid">
@@ -511,8 +578,8 @@ function App() {
                   {isSubmitting
                     ? "Saving..."
                     : editingEntryId
-                    ? "Update entry"
-                    : "Save brag entry"}
+                      ? "Update entry"
+                      : "Save brag entry"}
                 </button>
               </div>
             </form>
