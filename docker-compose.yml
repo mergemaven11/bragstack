@@ -12,6 +12,20 @@ services:
     volumes:
       - ./backend/app:/app/app
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: bragstack-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
   mongo:
     image: mongo:7
     container_name: bragstack-mongo
