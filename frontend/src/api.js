@@ -23,7 +23,17 @@ export async function registerUser(user) {
 }
 
 export async function loginUser(credentials) {
-  const response = await api.post("/auth/login", credentials);
+  const formData = new URLSearchParams();
+
+  formData.append("username", credentials.email);
+  formData.append("password", credentials.password);
+
+  const response = await api.post("/auth/login", formData, {
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  });
+
   return response.data;
 }
 
