@@ -15,6 +15,10 @@ import {
   loginUser,
   registerUser,
   updateEntry,
+  getPublicEntries,
+  getPublicWeeklyReport,
+  getPublicTagsSummary,
+  getPublicCategoriesSummary,
 } from "./api";
 import "./App.css";
 

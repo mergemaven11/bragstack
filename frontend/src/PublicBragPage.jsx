@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Code2, Search } from "lucide-react";
 import {
-  getCategoriesSummary,
-  getEntries,
-  getTagsSummary,
-  getWeeklyReport,
+  getPublicCategoriesSummary,
+  getPublicEntries,
+  getPublicTagsSummary,
+  getPublicWeeklyReport,
 } from "./api";
 
 import "./PublicBragPage.css";
@@ -52,26 +52,26 @@ function PublicBragPage() {
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
-    async function loadPublicPage() {
-      try {
-        const [entriesData, weeklyData, tagsData, categoriesData] =
-          await Promise.all([
-            getEntries(),
-            getWeeklyReport(),
-            getTagsSummary(),
-            getCategoriesSummary(),
-          ]);
+  async function loadPublicPage() {
+    try {
+      const [entriesData, weeklyData, tagsData, categoriesData] =
+        await Promise.all([
+          getPublicEntries(),
+          getPublicWeeklyReport(),
+          getPublicTagsSummary(),
+          getPublicCategoriesSummary(),
+        ]);
 
-        setEntries(entriesData?.entries ?? []);
-        setWeeklyReport(weeklyData);
-        setTagsSummary(tagsData);
-        setCategoriesSummary(categoriesData);
-        setIsOffline(false);
-      } catch (err) {
-        console.error("PublicBragPage failed to load:", err);
-        setIsOffline(true);
-      }
+      setEntries(entriesData.entries || []);
+      setWeeklyReport(weeklyData);
+      setTagsSummary(tagsData);
+      setCategoriesSummary(categoriesData);
+      setIsPreviewMode(false);
+    } catch (err) {
+      console.error("Failed to load public BragStack page:", err);
+      setIsPreviewMode(true);
     }
+  }
 
     loadPublicPage();
   }, []);

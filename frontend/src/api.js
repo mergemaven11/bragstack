@@ -76,3 +76,23 @@ export async function deleteEntry(entryId) {
   const response = await api.delete(`/entries/${entryId}`);
   return response.data;
 }
+
+export async function getPublicEntries() {
+  const response = await api.get("/public/brag");
+  return response.data;
+}
+
+export async function getPublicWeeklyReport() {
+  const response = await api.get("/public/brag/reports/weekly");
+  return response.data;
+}
+
+export async function getPublicTagsSummary() {
+  const response = await api.get("/public/brag/tags/summary");
+  return response.data;
+}
+
+export async function getPublicCategoriesSummary() {
+  const response = await api.get("/public/brag/categories/summary");
+  return response.data;
+}
