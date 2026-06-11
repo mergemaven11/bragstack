@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth_routes import router as auth_router
-from app.routes import router as entries_router
+from app.routes import public_router, router as entries_router
 
 app = FastAPI(
     title="BragStack API",
@@ -15,6 +15,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://congenial-space-orbit-g5pwgj56pg73w7vg-5173.app.github.dev",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -23,6 +24,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(entries_router)
+app.include_router(public_router)
 
 
 @app.get("/")

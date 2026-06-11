@@ -8,6 +8,7 @@ from app.database import entries_collection
 from app.models import BragEntryCreate
 
 router = APIRouter(prefix="/entries", tags=["entries"])
+public_router = APIRouter(prefix="/public", tags=["public"])
 
 
 def get_user_id(current_user: dict) -> str:
@@ -395,3 +396,124 @@ def delete_entry(
         raise HTTPException(status_code=404, detail="Entry not found")
 
     return {"message": "Entry deleted"}
+
+@public_router.get("/brag")
+def get_public_brag_entries():
+    """Return public brag entries for the shareable interviewer page.
+
+    Returns:
+        A dictionary containing the total number of public entries, the entries,
+        and a status message.
+    """
+    entries = [
+        serialize_entry(entry)
+        for entry in entries_collection.find({"is_public": True}).sort("created_at", -1)
+    ]
+
+    return {
+        "total_entries": len(entries),
+        "entries": entries,
+        "message": (
+            "No public entries yet."
+            if not entries
+            else "Public brag entries loaded successfully."
+        ),
+    }
+
+
+@public_router.get("/brag/reports/weekly")
+def get_public_weekly_report():
+    """Generate a public report from public brag entries.
+
+    Returns:
+        A dictionary containing public entry counts, category totals, tag totals,
+        resume bullets, and a status message.
+    """
+    entries = list(entries_collection.find({"is_public": True}).sort("created_at", -1))
+
+    categories = {}
+    tags = {}
+    resume_bullets = []
+
+    for entry in entries:
+        category = entry.get("category", "Uncategorized")
+        categories[category] = categories.get(category, 0) + 1
+
+        for tag in entry.get("tags", []):
+            tags[tag] = tags.get(tag, 0) + 1
+
+        if entry.get("resume_bullet"):
+            resume_bullets.append(entry["resume_bullet"])
+
+    return {
+        "period": "public_entries",
+        "total_entries": len(entries),
+        "categories": categories,
+        "top_tags": tags,
+        "resume_bullets": resume_bullets,
+        "message": (
+            "No public entries yet."
+            if not entries
+            else "Public report generated successfully."
+        ),
+    }
+
+
+@public_router.get("/brag/tags/summary")
+def get_public_tags_summary():
+    """Generate a tag summary from public brag entries.
+
+    Returns:
+        A dictionary containing public tag counts and a status message.
+    """
+    entries = entries_collection.find({"is_public": True})
+
+    tag_counts = {}
+
+    for entry in entries:
+        for tag in entry.get("tags", []):
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+
+    sorted_tag_counts = dict(
+        sorted(tag_counts.items(), key=lambda item: item[1], reverse=True)
+    )
+
+    return {
+        "total_unique_tags": len(sorted_tag_counts),
+        "tags": sorted_tag_counts,
+        "message": (
+            "No public tags found yet."
+            if not sorted_tag_counts
+            else "Public tag summary generated successfully."
+        ),
+    }
+
+
+@public_router.get("/brag/categories/summary")
+def get_public_categories_summary():
+    """Generate a category summary from public brag entries.
+
+    Returns:
+        A dictionary containing public category counts and a status message.
+    """
+    entries = entries_collection.find({"is_public": True})
+
+    category_counts = {}
+
+    for entry in entries:
+        category = entry.get("category", "Uncategorized")
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    sorted_category_counts = dict(
+        sorted(category_counts.items(), key=lambda item: item[1], reverse=True)
+    )
+
+    return {
+        "total_unique_categories": len(sorted_category_counts),
+        "categories": sorted_category_counts,
+        "message": (
+            "No public categories found yet."
+            if not sorted_category_counts
+            else "Public category summary generated successfully."
+        ),
+    }

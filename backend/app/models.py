@@ -16,6 +16,7 @@ class BragEntryCreate(BaseModel):
     impact: str = Field(..., examples=["Found incorrect hostname and restored connectivity."])
     lesson: Optional[str] = Field(None, examples=["Docker Compose DNS uses service names."])
     tags: list[str] = Field(default_factory=list, examples=[["Docker", "Networking", "Compose"]])
+    is_public: bool = Field(default=False, examples=[True])
 
 
 class BragEntryResponse(BaseModel):
@@ -24,10 +25,13 @@ class BragEntryResponse(BaseModel):
     id: str
     title: str
     category: str
+    entry_date: str
+    entry_type: str
     situation: str
     action: str
     impact: str
     lesson: Optional[str]
     tags: list[str]
+    is_public: bool = False
     resume_bullet: str
     created_at: datetime
