@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -41,6 +42,23 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+def slugify(value: str) -> str:
+    """Convert a display name into a URL-safe slug."""
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or "user"
+
+
+def generate_unique_public_slug(name: str) -> str:
+    """Generate a unique public profile slug for a new user."""
+    base_slug = slugify(name)
+    slug = base_slug
+    counter = 2
+
+    while users_collection.find_one({"public_slug": slug}):
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    return slug
 
 @router.post("/register")
 def register_user(payload: RegisterRequest):
@@ -66,11 +84,12 @@ def register_user(payload: RegisterRequest):
         )
 
     user_doc = {
-        "name": payload.name.strip(),
-        "email": normalized_email,
-        "hashed_password": hash_password(payload.password),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
+    "name": payload.name.strip(),
+    "email": normalized_email,
+    "public_slug": generate_unique_public_slug(payload.name),
+    "hashed_password": hash_password(payload.password),
+    "created_at": datetime.now(timezone.utc).isoformat(),
+}
 
     result = users_collection.insert_one(user_doc)
 
