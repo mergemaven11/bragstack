@@ -75,10 +75,11 @@ def serialize_user(user: dict) -> dict:
         A dictionary containing safe user fields.
     """
     return {
-        "id": str(user["_id"]),
-        "name": user.get("name", ""),
-        "email": user.get("email", ""),
-        "created_at": user.get("created_at"),
+    "id": str(user["_id"]),
+    "name": user.get("name", ""),
+    "email": user.get("email", ""),
+    "public_slug": user.get("public_slug", ""),
+    "created_at": user.get("created_at"),
     }
 
 
