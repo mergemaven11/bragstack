@@ -15,10 +15,6 @@ import {
   loginUser,
   registerUser,
   updateEntry,
-  getPublicEntries,
-  getPublicWeeklyReport,
-  getPublicTagsSummary,
-  getPublicCategoriesSummary,
 } from "./api";
 import "./App.css";
 
@@ -95,12 +91,21 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("bragstack_token");
 
-    if (isPublicPage || isLoginPage || isRegisterPage || !token) {
+    if (isPublicPage || isLoginPage || isRegisterPage) {
       return;
     }
 
-    loadDashboard();
-}, [isPublicPage, isLoginPage, isRegisterPage]);
+    if (!token) {
+      window.location.assign("/login");
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isPublicPage, isLoginPage, isRegisterPage]);
 
   function openCreateModal() {
     setEditingEntryId(null);
@@ -225,7 +230,6 @@ function App() {
   const token = localStorage.getItem("bragstack_token");
 
   if (!token) {
-    window.location.href = "/login";
     return null;
   }
 

@@ -151,3 +151,31 @@ def get_public_tags_summary_by_slug(slug: str):
             else "Public tag summary generated successfully."
         ),
     }
+
+@router.get("/brag/{slug}/categories/summary")
+def get_public_categories_summary_by_slug(slug: str):
+    """Generate a public category summary for a specific user's public profile."""
+    query = get_public_entry_query(slug)
+
+    entries = entries_collection.find(query)
+
+    category_counts = {}
+
+    for entry in entries:
+        category = entry.get("category", "Uncategorized")
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    sorted_category_counts = dict(
+        sorted(category_counts.items(), key=lambda item: item[1], reverse=True)
+    )
+
+    return {
+        "slug": normalize_slug(slug),
+        "total_unique_categories": len(sorted_category_counts),
+        "categories": sorted_category_counts,
+        "message": (
+            "No public categories found yet."
+            if not sorted_category_counts
+            else "Public category summary generated successfully."
+        ),
+    }
