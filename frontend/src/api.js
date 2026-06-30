@@ -1,11 +1,23 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:8000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
+
+function getPublicBragPath(slug, suffix = "") {
+  const normalizedSlug = slug?.trim();
+
+  if (!normalizedSlug) {
+    return `/public/brag${suffix}`;
+  }
+
+  return `/public/brag/${encodeURIComponent(normalizedSlug)}${suffix}`;
+}
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("bragstack_token");
@@ -77,22 +89,22 @@ export async function deleteEntry(entryId) {
   return response.data;
 }
 
-export async function getPublicEntries() {
-  const response = await api.get("/public/brag");
+export async function getPublicEntries(slug) {
+  const response = await api.get(getPublicBragPath(slug));
   return response.data;
 }
 
-export async function getPublicWeeklyReport() {
-  const response = await api.get("/public/brag/reports/weekly");
+export async function getPublicWeeklyReport(slug) {
+  const response = await api.get(getPublicBragPath(slug, "/reports/weekly"));
   return response.data;
 }
 
-export async function getPublicTagsSummary() {
-  const response = await api.get("/public/brag/tags/summary");
+export async function getPublicTagsSummary(slug) {
+  const response = await api.get(getPublicBragPath(slug, "/tags/summary"));
   return response.data;
 }
 
-export async function getPublicCategoriesSummary() {
-  const response = await api.get("/public/brag/categories/summary");
+export async function getPublicCategoriesSummary(slug) {
+  const response = await api.get(getPublicBragPath(slug, "/categories/summary"));
   return response.data;
 }

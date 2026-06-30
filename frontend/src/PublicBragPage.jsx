@@ -51,30 +51,35 @@ function PublicBragPage() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [isOffline, setIsOffline] = useState(false);
 
+  const publicSlug = useMemo(() => {
+    const [, page, slug] = window.location.pathname.split("/");
+    return page === "brag" ? slug : undefined;
+  }, []);
+
   useEffect(() => {
   async function loadPublicPage() {
     try {
       const [entriesData, weeklyData, tagsData, categoriesData] =
         await Promise.all([
-          getPublicEntries(),
-          getPublicWeeklyReport(),
-          getPublicTagsSummary(),
-          getPublicCategoriesSummary(),
+          getPublicEntries(publicSlug),
+          getPublicWeeklyReport(publicSlug),
+          getPublicTagsSummary(publicSlug),
+          getPublicCategoriesSummary(publicSlug),
         ]);
 
       setEntries(entriesData.entries || []);
       setWeeklyReport(weeklyData);
       setTagsSummary(tagsData);
       setCategoriesSummary(categoriesData);
-      setIsPreviewMode(false);
+      setIsOffline(false);
     } catch (err) {
       console.error("Failed to load public BragStack page:", err);
-      setIsPreviewMode(true);
+      setIsOffline(true);
     }
   }
 
     loadPublicPage();
-  }, []);
+  }, [publicSlug]);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {

@@ -10,7 +10,7 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./backend/app:/app/app
+      - ./backend:/app
 
   frontend:
     build:
@@ -19,7 +19,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_BASE_URL: https://congenial-space-orbit-g5pwgj56pg73w7vg-8000.app.github.dev
+      VITE_API_URL: https://congenial-space-orbit-g5pwgj56pg73w7vg-8000.app.github.dev
     depends_on:
       - api
     volumes:
