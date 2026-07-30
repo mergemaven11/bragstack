@@ -79,8 +79,14 @@ def serialize_user(user: dict) -> dict:
     "name": user.get("name", ""),
     "email": user.get("email", ""),
     "public_slug": user.get("public_slug", ""),
+    "headline": user.get("headline", ""),
+    "bio": user.get("bio", ""),
+    "location": user.get("location", ""),
+    "github_url": user.get("github_url", ""),
+    "portfolio_url": user.get("portfolio_url", ""),
+    "resume_url": user.get("resume_url", ""),
     "created_at": user.get("created_at"),
-    }
+}
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:

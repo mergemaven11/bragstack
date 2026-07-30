@@ -54,6 +54,19 @@ export async function getCurrentUser() {
   return response.data;
 }
 
+export async function updateCurrentUserProfile(profile) {
+  const response = await api.patch("/auth/me/profile", profile);
+  return response.data;
+}
+
+export async function getPublicProfile(slug) {
+  const response = await api.get(
+    getPublicBragPath(slug, "/profile")
+  );
+
+  return response.data;
+}
+
 export async function getEntries() {
   const response = await api.get("/entries?limit=10&skip=0");
   return response.data;

@@ -791,3 +791,64 @@ a {
   background: rgba(148, 163, 184, 0.1);
   border: 1px solid rgba(148, 163, 184, 0.25);
 }
+
+.profile-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-card-heading .mini-label {
+  margin: 0;
+}
+
+.profile-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.55);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profile-edit-button:hover {
+  color: #f8fafc;
+  border-color: rgba(166, 220, 255, 0.45);
+}
+
+.profile-headline {
+  color: #d8e1ee;
+  font-weight: 700;
+}
+
+.profile-bio {
+  color: #aebbd0;
+  line-height: 1.6;
+}
+
+.profile-location {
+  color: #9ed8ff;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.profile-modal-card {
+  max-width: 680px;
+}
+
+.profile-form-error {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 12px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.16);
+  font-weight: 700;
+}
