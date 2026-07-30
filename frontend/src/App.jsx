@@ -3,6 +3,7 @@ import { Pencil, Plus, Trash2, X } from "lucide-react";
 
 import AuthPage from "./AuthPage";
 import PublicBragPage from "./PublicBragPage";
+import LandingPage from "./LandingPage";
 
 import {
   createEntry,
@@ -55,6 +56,7 @@ function App() {
   const [formData, setFormData] = useState(EMPTY_FORM);
 
   const path = window.location.pathname;
+  const isLandingPage = path === "/";
   const isPublicPage = path.startsWith("/brag");
   const isLoginPage = path === "/login";
   const isRegisterPage = path === "/register";
@@ -92,7 +94,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("bragstack_token");
 
-    if (isPublicPage || isLoginPage || isRegisterPage) {
+    if (isLandingPage || isPublicPage || isLoginPage || isRegisterPage) {
       return;
     }
 
@@ -106,7 +108,7 @@ function App() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [isPublicPage, isLoginPage, isRegisterPage]);
+  }, [isLandingPage,isPublicPage, isLoginPage, isRegisterPage]);
 
   function openCreateModal() {
     setEditingEntryId(null);
@@ -207,17 +209,21 @@ function App() {
   async function handleLogin(credentials) {
     const data = await loginUser(credentials);
     localStorage.setItem("bragstack_token", data.access_token);
-    window.location.href = "/";
+    window.location.href = "/app";
   }
 
   async function handleRegister(user) {
     const data = await registerUser(user);
     localStorage.setItem("bragstack_token", data.access_token);
-    window.location.href = "/";
+    window.location.href = "/app";
   }
 
   if (isPublicPage) {
     return <PublicBragPage />;
+  }
+
+  if (isLandingPage) {
+    return <LandingPage />;
   }
 
   if (isLoginPage) {
