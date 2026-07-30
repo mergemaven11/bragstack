@@ -382,6 +382,13 @@ function App() {
                     </div>
 
                     <div className="entry-actions">
+                      <span
+                        className={`visibility-badge ${entry.is_public ? "public" : "private"
+                          }`}
+                      >
+                        {entry.is_public ? "Public" : "Private"}
+                      </span>
+
                       <button
                         type="button"
                         className="icon-action"
