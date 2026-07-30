@@ -39,6 +39,7 @@ const EMPTY_FORM = {
   impact: "",
   lesson: "",
   tags: "",
+  is_public: false,
 };
 
 function App() {
@@ -52,7 +53,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
-  
+
   const path = window.location.pathname;
   const isPublicPage = path.startsWith("/brag");
   const isLoginPage = path === "/login";
@@ -131,6 +132,7 @@ function App() {
       impact: entry.impact ?? "",
       lesson: entry.lesson ?? "",
       tags: entry.tags?.join(", ") ?? "",
+      is_public: entry.is_public ?? false,
     });
 
     setIsModalOpen(true);
@@ -147,11 +149,11 @@ function App() {
   }
 
   function handleInputChange(event) {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((current) => ({
       ...current,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   }
 
@@ -566,6 +568,17 @@ function App() {
                   value={formData.tags}
                   onChange={handleInputChange}
                   placeholder="Docker, FastAPI, MongoDB"
+                />
+              </label>
+
+              <label className="visibility-toggle">
+                <span>Show this entry on my public BragStack</span>
+
+                <input
+                  type="checkbox"
+                  name="is_public"
+                  checked={formData.is_public}
+                  onChange={handleInputChange}
                 />
               </label>
 

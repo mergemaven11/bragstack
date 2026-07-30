@@ -739,3 +739,32 @@ a {
     font-size: clamp(2.6rem, 16vw, 4rem);
   }
 }
+
+.entry-form .visibility-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+}
+
+.entry-form .visibility-toggle span {
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.entry-form .visibility-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: #8b5cf6;
+  cursor: pointer;
+}
