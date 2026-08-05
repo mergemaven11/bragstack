@@ -12,6 +12,27 @@ def normalize_slug(slug: str) -> str:
     """Normalize a public profile slug for lookup."""
     return slug.strip().lower()
 
+def parse_datetime(value):
+    """Convert MongoDB datetime or ISO datetime text into UTC datetime."""
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+
+        return value.astimezone(timezone.utc)
+
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+
+            return parsed.astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    return None
+
 
 def serialize_entry(entry: dict) -> dict:
     """Convert a MongoDB brag entry into a safe public response."""
@@ -116,8 +137,19 @@ def get_public_weekly_report_by_slug(slug: str):
     query = get_public_entry_query(slug)
 
     week_start = datetime.now(timezone.utc) - timedelta(days=7)
-    query["created_at"] = {"$gte": week_start}
-    entries = list(entries_collection.find(query).sort("created_at", -1))
+    entries = []
+
+    for entry in entries_collection.find(query):
+        created_at = parse_datetime(entry.get("created_at"))
+
+        if created_at is not None and created_at >= week_start:
+            entries.append(entry)
+
+    entries.sort(
+        key=lambda entry: parse_datetime(entry.get("created_at"))
+        or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
 
     categories = {}
     tags = {}
