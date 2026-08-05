@@ -121,3 +121,23 @@ export async function getPublicCategoriesSummary(slug) {
   const response = await api.get(getPublicBragPath(slug, "/categories/summary"));
   return response.data;
 }
+
+export async function getImpactReceipts() {
+  const response = await api.get(
+    "/impact-receipts?limit=20&skip=0"
+  );
+
+  return response.data;
+}
+
+export async function createImpactReceiptFromEntry(
+  entryId,
+  payload
+) {
+  const response = await api.post(
+    `/impact-receipts/from-entry/${entryId}`,
+    payload
+  );
+
+  return response.data;
+}

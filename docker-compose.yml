@@ -7,6 +7,13 @@ services:
       - "8000:8000"
     environment:
       MONGO_URL: mongodb://mongo:27017
+      WATCHFILES_FORCE_POLLING: "true"
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir /app/app
     depends_on:
       - mongo
     volumes:
@@ -19,8 +26,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      VITE_API_BASE_URL: https://super-fishstick-wgjqr7g4p9c5gxq-8000.app.github.dev
-      VITE_API_URL: https://super-fishstick-wgjqr7g4p9c5gxq-8000.app.github.dev
+      VITE_API_BASE_URL: http://localhost:8000
+      VITE_API_URL: http://localhost:8000
     depends_on:
       - api
     volumes:

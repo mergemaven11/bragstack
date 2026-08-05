@@ -1,3 +1,6 @@
+
+
+
 import { useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 
@@ -7,16 +10,18 @@ import LandingPage from "./LandingPage";
 
 import {
   createEntry,
+  createImpactReceiptFromEntry,
   deleteEntry,
   getCategoriesSummary,
   getCurrentUser,
   getEntries,
+  getImpactReceipts,
   getTagsSummary,
   getWeeklyReport,
   loginUser,
   registerUser,
-  updateEntry,
   updateCurrentUserProfile,
+  updateEntry,
 } from "./api";
 import "./App.css";
 
@@ -30,6 +35,11 @@ const ENTRY_TYPES = [
 ];
 
 const getTodayDate = () => new Date().toISOString().slice(0, 10);
+
+const formatLabel = (value = "") =>
+  value
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 
 const EMPTY_FORM = {
   title: "",
@@ -57,6 +67,10 @@ const EMPTY_PROFILE_FORM = {
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [entries, setEntries] = useState([]);
+  const [impactReceipts, setImpactReceipts] = useState([]);
+  const [creatingReceiptEntryId, setCreatingReceiptEntryId] = useState(null);
+  const [receiptNotice, setReceiptNotice] = useState("");
+  const [receiptError, setReceiptError] = useState("");
   const [weeklyReport, setWeeklyReport] = useState(null);
   const [tagsSummary, setTagsSummary] = useState(null);
   const [categoriesSummary, setCategoriesSummary] = useState(null);
@@ -78,17 +92,25 @@ function App() {
 
   async function loadDashboard() {
     try {
-      const [userData, entriesData, weeklyData, tagsData, categoriesData] =
-        await Promise.all([
-          getCurrentUser(),
-          getEntries(),
-          getWeeklyReport(),
-          getTagsSummary(),
-          getCategoriesSummary(),
-        ]);
+      const [
+        userData,
+        entriesData,
+        receiptsData,
+        weeklyData,
+        tagsData,
+        categoriesData,
+      ] = await Promise.all([
+        getCurrentUser(),
+        getEntries(),
+        getImpactReceipts(),
+        getWeeklyReport(),
+        getTagsSummary(),
+        getCategoriesSummary(),
+      ]);
 
       setCurrentUser(userData);
       setEntries(entriesData.entries ?? []);
+      setImpactReceipts(receiptsData.receipts ?? []);
       setWeeklyReport(weeklyData);
       setTagsSummary(tagsData);
       setCategoriesSummary(categoriesData);
@@ -141,8 +163,7 @@ function App() {
     setProfileError("");
 
     try {
-      const updatedUser =
-        await updateCurrentUserProfile(profileForm);
+      const updatedUser = await updateCurrentUserProfile(profileForm);
 
       setCurrentUser(updatedUser);
       closeProfileModal();
@@ -151,7 +172,7 @@ function App() {
 
       setProfileError(
         error.response?.data?.detail ??
-        "Your profile could not be saved."
+          "Your profile could not be saved."
       );
     } finally {
       setIsSavingProfile(false);
@@ -161,7 +182,12 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("bragstack_token");
 
-    if (isLandingPage || isPublicPage || isLoginPage || isRegisterPage) {
+    if (
+      isLandingPage ||
+      isPublicPage ||
+      isLoginPage ||
+      isRegisterPage
+    ) {
       return;
     }
 
@@ -175,7 +201,12 @@ function App() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [isLandingPage, isPublicPage, isLoginPage, isRegisterPage]);
+  }, [
+    isLandingPage,
+    isPublicPage,
+    isLoginPage,
+    isRegisterPage,
+  ]);
 
   function openCreateModal() {
     setEditingEntryId(null);
@@ -270,8 +301,40 @@ function App() {
     }
   }
 
-  const topTags = tagsSummary?.tags ? Object.entries(tagsSummary.tags) : [];
+  async function handleCreateImpactReceipt(entryId) {
+    setCreatingReceiptEntryId(entryId);
+    setReceiptNotice("");
+    setReceiptError("");
 
+    try {
+      await createImpactReceiptFromEntry(entryId, {
+        contribution: null,
+        result: null,
+        evidence: [],
+        skills: [],
+        credit: [],
+        is_public: false,
+      });
+
+      await loadDashboard();
+      setReceiptNotice("Impact Receipt created successfully.");
+    } catch (error) {
+      console.error(error);
+
+      if (error.response?.status === 409) {
+        setReceiptError(
+          "This entry already has an Impact Receipt."
+        );
+      } else {
+        setReceiptError(
+          error.response?.data?.detail ??
+            "The Impact Receipt could not be created."
+        );
+      }
+    } finally {
+      setCreatingReceiptEntryId(null);
+    }
+  }
 
   async function handleLogin(credentials) {
     const data = await loginUser(credentials);
@@ -285,6 +348,14 @@ function App() {
     window.location.href = "/app";
   }
 
+  const topTags = tagsSummary?.tags
+    ? Object.entries(tagsSummary.tags)
+    : [];
+
+  const receiptSourceEntryIds = new Set(
+    impactReceipts.map((receipt) => receipt.source_entry_id)
+  );
+
   if (isPublicPage) {
     return <PublicBragPage />;
   }
@@ -297,9 +368,13 @@ function App() {
     return <AuthPage mode="login" onLogin={handleLogin} />;
   }
 
-
   if (isRegisterPage) {
-    return <AuthPage mode="register" onRegister={handleRegister} />;
+    return (
+      <AuthPage
+        mode="register"
+        onRegister={handleRegister}
+      />
+    );
   }
 
   const token = localStorage.getItem("bragstack_token");
@@ -320,14 +395,16 @@ function App() {
           </h1>
 
           <p>
-            Track technical wins, skill growth, resume bullets, and project
-            evidence in one clean portfolio-ready space.
+            Track technical wins, skill growth, resume bullets,
+            and project evidence in one clean portfolio-ready
+            space.
           </p>
 
           <div className="hero-actions">
             <a className="btn primary" href="#entries">
               View proof
             </a>
+
             <a
               className="btn secondary"
               href="http://localhost:8000/docs"
@@ -424,8 +501,10 @@ function App() {
 
       {isOffline && (
         <section className="notice">
-          <strong>Preview mode</strong>
-          <span>Please contact support.</span>
+          <strong>Connection problem</strong>
+          <span>
+            BragStack could not load all dashboard data.
+          </span>
         </section>
       )}
 
@@ -438,15 +517,221 @@ function App() {
 
         <article className="stat-card">
           <p>Unique Tags</p>
-          <strong>{tagsSummary?.total_unique_tags ?? 0}</strong>
+          <strong>
+            {tagsSummary?.total_unique_tags ?? 0}
+          </strong>
           <span>Skills tracked across entries</span>
         </article>
 
         <article className="stat-card">
           <p>Categories</p>
-          <strong>{categoriesSummary?.total_unique_categories ?? 0}</strong>
+          <strong>
+            {categoriesSummary?.total_unique_categories ?? 0}
+          </strong>
           <span>Career areas documented</span>
         </article>
+      </section>
+
+      <section
+        className="impact-section"
+        id="impact-receipts"
+      >
+        <div className="impact-section-header">
+          <div>
+            <p className="mini-label">
+              Evidence-Backed Proof
+            </p>
+            <h2>Impact Receipts</h2>
+            <p>
+              Structured proof of what you contributed, what changed,
+              and what evidence supports it.
+            </p>
+          </div>
+
+          <span className="impact-count">
+            {impactReceipts.length}{" "}
+            {impactReceipts.length === 1
+              ? "receipt"
+              : "receipts"}
+          </span>
+        </div>
+
+        {receiptNotice && (
+          <p className="receipt-feedback success">
+            {receiptNotice}
+          </p>
+        )}
+
+        {receiptError && (
+          <p className="receipt-feedback error">
+            {receiptError}
+          </p>
+        )}
+
+        {impactReceipts.length === 0 ? (
+          <div className="impact-empty-state">
+            <h3>No Impact Receipts yet.</h3>
+            <p>
+              Use the Create Impact Receipt button on a meaningful
+              entry below.
+            </p>
+          </div>
+        ) : (
+          <div className="impact-receipt-grid">
+            {impactReceipts.map((receipt) => (
+              <article
+                className="impact-receipt-card compact"
+                key={receipt.id}
+              >
+                <div className="impact-receipt-top">
+                  <div>
+                    <p className="mini-label">
+                      Impact Receipt
+                    </p>
+                    <h3>{receipt.accomplishment}</h3>
+                  </div>
+
+                  <span
+                    className={`visibility-badge ${
+                      receipt.is_public
+                        ? "public"
+                        : "private"
+                    }`}
+                  >
+                    {receipt.is_public
+                      ? "Public"
+                      : "Private"}
+                  </span>
+                </div>
+
+                <div className="impact-result-preview">
+                  <span>Result</span>
+                  <p>{receipt.result}</p>
+                </div>
+
+                <div className="receipt-summary-row">
+                  <span>
+                    {receipt.evidence?.length ?? 0} evidence
+                  </span>
+                  <span>
+                    {receipt.credit?.length ?? 0} contributors
+                  </span>
+                  <span>
+                    {receipt.confirmations?.filter(
+                      (confirmation) =>
+                        confirmation.status === "confirmed"
+                    ).length ?? 0}{" "}
+                    confirmed
+                  </span>
+                </div>
+
+                <div className="trust-signal-list">
+                  {receipt.trust_signals?.map((signal) => (
+                    <span key={signal}>
+                      {formatLabel(signal)}
+                    </span>
+                  ))}
+                </div>
+
+                <details className="receipt-details">
+                  <summary>View receipt details</summary>
+
+                  <div className="receipt-details-content">
+                    <div className="impact-receipt-detail">
+                      <span>My contribution</span>
+                      <p>{receipt.contribution}</p>
+                    </div>
+
+                    {receipt.skills?.length > 0 && (
+                      <div className="impact-receipt-detail">
+                        <span>Skills demonstrated</span>
+
+                        <div className="tags">
+                          {receipt.skills.map((skill) => (
+                            <span key={skill}>{skill}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {receipt.evidence?.length > 0 && (
+                      <div className="impact-receipt-detail">
+                        <span>Evidence</span>
+
+                        <div className="impact-evidence-list">
+                          {receipt.evidence.map(
+                            (evidenceItem, index) => (
+                              <div
+                                className="impact-evidence-item"
+                                key={`${evidenceItem.title}-${index}`}
+                              >
+                                <strong>
+                                  {evidenceItem.title}
+                                </strong>
+
+                                <small>
+                                  {formatLabel(
+                                    evidenceItem.evidence_type
+                                  )}
+                                </small>
+
+                                {evidenceItem.reference && (
+                                  <p>
+                                    {evidenceItem.reference}
+                                  </p>
+                                )}
+
+                                {evidenceItem.description && (
+                                  <p>
+                                    {evidenceItem.description}
+                                  </p>
+                                )}
+
+                                <span
+                                  className={`visibility-badge ${
+                                    evidenceItem.is_public
+                                      ? "public"
+                                      : "private"
+                                  }`}
+                                >
+                                  {evidenceItem.is_public
+                                    ? "Public evidence"
+                                    : "Private evidence"}
+                                </span>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {receipt.credit?.length > 0 && (
+                      <div className="impact-receipt-detail">
+                        <span>Shared credit</span>
+
+                        <div className="impact-credit-list">
+                          {receipt.credit.map(
+                            (creditItem, index) => (
+                              <p
+                                key={`${creditItem.name}-${index}`}
+                              >
+                                <strong>
+                                  {creditItem.name}
+                                </strong>
+                                {" — "}
+                                {creditItem.contribution}
+                              </p>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </details>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="toolbar">
@@ -467,7 +752,11 @@ function App() {
             Logout
           </button>
 
-          <button className="btn primary icon-btn" onClick={openCreateModal}>
+          <button
+            className="btn primary icon-btn"
+            type="button"
+            onClick={openCreateModal}
+          >
             <Plus size={18} />
             New Entry
           </button>
@@ -487,47 +776,75 @@ function App() {
             <div className="empty-state">
               <h3>No entries loaded yet.</h3>
               <p>
-                Once your backend is connected, your technical wins will appear
-                here as resume-ready proof.
+                Add a brag entry to begin building your
+                evidence-backed career record.
               </p>
             </div>
           ) : (
             <div className="entry-list">
-              {entries.map((entry) => (
-                <article className="entry-card" key={entry.id}>
+              {entries.map((entry) => {
+                const hasReceipt = receiptSourceEntryIds.has(
+                  entry.id
+                );
+                const isCreatingReceipt =
+                  creatingReceiptEntryId === entry.id;
+
+                return (
+                  <article
+                    className="entry-card"
+                    key={entry.id}
+                  >
                   <div className="entry-top">
                     <div>
                       <p className="mini-label">
                         {entry.category}
-                        {entry.entry_type ? ` • ${entry.entry_type}` : ""}
-                        {entry.entry_date ? ` • ${entry.entry_date}` : ""}
+                        {entry.entry_type
+                          ? ` • ${entry.entry_type}`
+                          : ""}
+                        {entry.entry_date
+                          ? ` • ${entry.entry_date}`
+                          : ""}
                       </p>
+
                       <h3>{entry.title}</h3>
                     </div>
 
                     <div className="entry-actions">
                       <span
-                        className={`visibility-badge ${entry.is_public ? "public" : "private"
-                          }`}
+                        className={`visibility-badge ${
+                          entry.is_public
+                            ? "public"
+                            : "private"
+                        }`}
                       >
-                        {entry.is_public ? "Public" : "Private"}
+                        {entry.is_public
+                          ? "Public"
+                          : "Private"}
                       </span>
 
                       <button
                         type="button"
                         className="icon-action"
-                        onClick={() => openEditModal(entry)}
+                        onClick={() =>
+                          openEditModal(entry)
+                        }
                         aria-label="Edit entry"
                         title="Edit entry"
                       >
-                        <Pencil size={17} strokeWidth={2.4} />
+                        <Pencil
+                          size={17}
+                          strokeWidth={2.4}
+                        />
                       </button>
 
                       <button
                         type="button"
                         className="icon-action danger"
-                        onClick={() => handleDeleteEntry(entry.id)}
+                        onClick={() =>
+                          handleDeleteEntry(entry.id)
+                        }
                         aria-label="Delete entry"
+                        title="Delete entry"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -541,8 +858,26 @@ function App() {
                       <span key={tag}>{tag}</span>
                     ))}
                   </div>
+
+                  <div className="entry-receipt-action">
+                    <button
+                      type="button"
+                      className="btn secondary receipt-button"
+                      disabled={hasReceipt || isCreatingReceipt}
+                      onClick={() =>
+                        handleCreateImpactReceipt(entry.id)
+                      }
+                    >
+                      {isCreatingReceipt
+                        ? "Creating receipt..."
+                        : hasReceipt
+                          ? "Impact Receipt created"
+                          : "Create Impact Receipt"}
+                    </button>
+                  </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           )}
         </article>
@@ -553,7 +888,10 @@ function App() {
 
           {topTags.length === 0 ? (
             <div className="empty-state small">
-              <p>Your top skills will show here after entries load.</p>
+              <p>
+                Your top skills will show here after entries
+                load.
+              </p>
             </div>
           ) : (
             <div className="skill-list">
@@ -569,319 +907,326 @@ function App() {
       </section>
 
       {isProfileModalOpen && (
-  <div
-    className="modal-backdrop"
-    onClick={closeProfileModal}
-  >
-    <div
-      className="modal-card profile-modal-card"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <div className="modal-header">
-        <div>
-          <p className="mini-label">Profile Settings</p>
-          <h2>Edit your public profile</h2>
-        </div>
-
-        <button
-          type="button"
-          className="modal-close"
+        <div
+          className="modal-backdrop"
           onClick={closeProfileModal}
-          aria-label="Close profile editor"
         >
-          <X size={18} />
-        </button>
-      </div>
-
-      <form
-        className="entry-form"
-        onSubmit={handleProfileSubmit}
-      >
-        <label>
-          Display name
-          <input
-            name="name"
-            value={profileForm.name}
-            onChange={handleProfileInputChange}
-            placeholder="Tee"
-            maxLength={80}
-            required
-          />
-        </label>
-
-        <label>
-          Professional headline
-          <input
-            name="headline"
-            value={profileForm.headline}
-            onChange={handleProfileInputChange}
-            placeholder="Docker support engineer and backend developer"
-            maxLength={120}
-          />
-        </label>
-
-        <label>
-          About you
-          <textarea
-            name="bio"
-            value={profileForm.bio}
-            onChange={handleProfileInputChange}
-            placeholder="Share a short professional introduction."
-            maxLength={500}
-          />
-        </label>
-
-        <label>
-          Location
-          <input
-            name="location"
-            value={profileForm.location}
-            onChange={handleProfileInputChange}
-            placeholder="Atlanta, Georgia"
-            maxLength={100}
-          />
-        </label>
-
-        <label>
-          GitHub URL
-          <input
-            type="url"
-            name="github_url"
-            value={profileForm.github_url}
-            onChange={handleProfileInputChange}
-            placeholder="https://github.com/username"
-          />
-        </label>
-
-        <label>
-          Portfolio URL
-          <input
-            type="url"
-            name="portfolio_url"
-            value={profileForm.portfolio_url}
-            onChange={handleProfileInputChange}
-            placeholder="https://yourportfolio.com"
-          />
-        </label>
-
-        <label>
-          Résumé URL
-          <input
-            type="url"
-            name="resume_url"
-            value={profileForm.resume_url}
-            onChange={handleProfileInputChange}
-            placeholder="https://example.com/resume"
-          />
-        </label>
-
-        {profileError && (
-          <p className="profile-form-error">
-            {profileError}
-          </p>
-        )}
-
-        <div className="modal-footer">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={closeProfileModal}
+          <div
+            className="modal-card profile-modal-card"
+            onClick={(event) => event.stopPropagation()}
           >
-            Cancel
-          </button>
+            <div className="modal-header">
+              <div>
+                <p className="mini-label">
+                  Profile Settings
+                </p>
+                <h2>Edit your public profile</h2>
+              </div>
 
-          <button
-            type="submit"
-            className="btn primary form-button"
-            disabled={isSavingProfile}
-          >
-            {isSavingProfile
-              ? "Saving..."
-              : "Save profile"}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+              <button
+                type="button"
+                className="modal-close"
+                onClick={closeProfileModal}
+                aria-label="Close profile editor"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-{isModalOpen && (
-  <div className="modal-backdrop" onClick={closeModal}>
-    <div
-      className="modal-card"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <div className="modal-header">
-        <div>
-          <p className="mini-label">
-            {editingEntryId ? "Edit Proof" : "Create Proof"}
-          </p>
-
-          <h2>
-            {editingEntryId
-              ? "Update brag entry"
-              : "Add a new brag entry"}
-          </h2>
-        </div>
-
-        <button
-          type="button"
-          className="modal-close"
-          onClick={closeModal}
-          aria-label="Close modal"
-        >
-          <X size={18} />
-        </button>
-      </div>
-
-      <form
-        className="entry-form"
-        onSubmit={handleCreateEntry}
-      >
-        <div className="form-row">
-          <label>
-            Title
-            <input
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Debugged Docker networking issue"
-              required
-            />
-          </label>
-
-          <label>
-            Category
-            <input
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              placeholder="Docker"
-              required
-            />
-          </label>
-        </div>
-
-        <div className="form-row">
-          <label>
-            Entry Date
-            <input
-              type="date"
-              name="entry_date"
-              value={formData.entry_date}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-
-          <label>
-            Entry Type
-            <select
-              name="entry_type"
-              value={formData.entry_type}
-              onChange={handleInputChange}
-              required
+            <form
+              className="entry-form"
+              onSubmit={handleProfileSubmit}
             >
-              {ENTRY_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </label>
+              <label>
+                Display name
+                <input
+                  name="name"
+                  value={profileForm.name}
+                  onChange={handleProfileInputChange}
+                  placeholder="Tee"
+                  maxLength={80}
+                  required
+                />
+              </label>
+
+              <label>
+                Professional headline
+                <input
+                  name="headline"
+                  value={profileForm.headline}
+                  onChange={handleProfileInputChange}
+                  placeholder="Docker support engineer and backend developer"
+                  maxLength={120}
+                />
+              </label>
+
+              <label>
+                About you
+                <textarea
+                  name="bio"
+                  value={profileForm.bio}
+                  onChange={handleProfileInputChange}
+                  placeholder="Share a short professional introduction."
+                  maxLength={500}
+                />
+              </label>
+
+              <label>
+                Location
+                <input
+                  name="location"
+                  value={profileForm.location}
+                  onChange={handleProfileInputChange}
+                  placeholder="Atlanta, Georgia"
+                  maxLength={100}
+                />
+              </label>
+
+              <label>
+                GitHub URL
+                <input
+                  type="url"
+                  name="github_url"
+                  value={profileForm.github_url}
+                  onChange={handleProfileInputChange}
+                  placeholder="https://github.com/username"
+                />
+              </label>
+
+              <label>
+                Portfolio URL
+                <input
+                  type="url"
+                  name="portfolio_url"
+                  value={profileForm.portfolio_url}
+                  onChange={handleProfileInputChange}
+                  placeholder="https://yourportfolio.com"
+                />
+              </label>
+
+              <label>
+                Résumé URL
+                <input
+                  type="url"
+                  name="resume_url"
+                  value={profileForm.resume_url}
+                  onChange={handleProfileInputChange}
+                  placeholder="https://example.com/resume"
+                />
+              </label>
+
+              {profileError && (
+                <p className="profile-form-error">
+                  {profileError}
+                </p>
+              )}
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={closeProfileModal}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="btn primary form-button"
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile
+                    ? "Saving..."
+                    : "Save profile"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      )}
 
-        <label>
-          Situation
-          <textarea
-            name="situation"
-            value={formData.situation}
-            onChange={handleInputChange}
-            placeholder="What was happening?"
-            required
-          />
-        </label>
-
-        <label>
-          Action
-          <textarea
-            name="action"
-            value={formData.action}
-            onChange={handleInputChange}
-            placeholder="What did you do?"
-            required
-          />
-        </label>
-
-        <label>
-          Impact
-          <textarea
-            name="impact"
-            value={formData.impact}
-            onChange={handleInputChange}
-            placeholder="What changed because of your work?"
-            required
-          />
-        </label>
-
-        <label>
-          Lesson
-          <input
-            name="lesson"
-            value={formData.lesson}
-            onChange={handleInputChange}
-            placeholder="What did you learn?"
-          />
-        </label>
-
-        <label>
-          Tags
-          <input
-            name="tags"
-            value={formData.tags}
-            onChange={handleInputChange}
-            placeholder="Docker, FastAPI, MongoDB"
-          />
-        </label>
-
-        <label className="visibility-toggle">
-          <span>
-            Show this entry on my public BragStack
-          </span>
-
-          <input
-            type="checkbox"
-            name="is_public"
-            checked={formData.is_public}
-            onChange={handleInputChange}
-          />
-        </label>
-
-        <div className="modal-footer">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={closeModal}
+      {isModalOpen && (
+        <div
+          className="modal-backdrop"
+          onClick={closeModal}
+        >
+          <div
+            className="modal-card"
+            onClick={(event) => event.stopPropagation()}
           >
-            Cancel
-          </button>
+            <div className="modal-header">
+              <div>
+                <p className="mini-label">
+                  {editingEntryId
+                    ? "Edit Proof"
+                    : "Create Proof"}
+                </p>
 
-          <button
-            className="btn primary form-button"
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting
-              ? "Saving..."
-              : editingEntryId
-                ? "Update entry"
-                : "Save brag entry"}
-          </button>
+                <h2>
+                  {editingEntryId
+                    ? "Update brag entry"
+                    : "Add a new brag entry"}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="modal-close"
+                onClick={closeModal}
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form
+              className="entry-form"
+              onSubmit={handleCreateEntry}
+            >
+              <div className="form-row">
+                <label>
+                  Title
+                  <input
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    placeholder="Debugged Docker networking issue"
+                    required
+                  />
+                </label>
+
+                <label>
+                  Category
+                  <input
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    placeholder="Docker"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="form-row">
+                <label>
+                  Entry Date
+                  <input
+                    type="date"
+                    name="entry_date"
+                    value={formData.entry_date}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Entry Type
+                  <select
+                    name="entry_type"
+                    value={formData.entry_type}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    {ENTRY_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                Situation
+                <textarea
+                  name="situation"
+                  value={formData.situation}
+                  onChange={handleInputChange}
+                  placeholder="What was happening?"
+                  required
+                />
+              </label>
+
+              <label>
+                Action
+                <textarea
+                  name="action"
+                  value={formData.action}
+                  onChange={handleInputChange}
+                  placeholder="What did you do?"
+                  required
+                />
+              </label>
+
+              <label>
+                Impact
+                <textarea
+                  name="impact"
+                  value={formData.impact}
+                  onChange={handleInputChange}
+                  placeholder="What changed because of your work?"
+                  required
+                />
+              </label>
+
+              <label>
+                Lesson
+                <input
+                  name="lesson"
+                  value={formData.lesson}
+                  onChange={handleInputChange}
+                  placeholder="What did you learn?"
+                />
+              </label>
+
+              <label>
+                Tags
+                <input
+                  name="tags"
+                  value={formData.tags}
+                  onChange={handleInputChange}
+                  placeholder="Docker, FastAPI, MongoDB"
+                />
+              </label>
+
+              <label className="visibility-toggle">
+                <span>
+                  Show this entry on my public BragStack
+                </span>
+
+                <input
+                  type="checkbox"
+                  name="is_public"
+                  checked={formData.is_public}
+                  onChange={handleInputChange}
+                />
+              </label>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="btn primary form-button"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : editingEntryId
+                      ? "Update entry"
+                      : "Save brag entry"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </main>
   );
 }

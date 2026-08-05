@@ -8,3 +8,4 @@ db = client["bragstack"]
 
 entries_collection = db["entries"]
 users_collection = db["users"]
+impact_receipts_collection = db["impact_receipts"]
