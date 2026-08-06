@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth_routes import router as auth_router
 from app.public_slug_routes import router as public_slug_router
 from app.routes import public_router, router as entries_router
+from app.impact_receipt_routes import router as impact_receipts_router
+
 
 app = FastAPI(
     title="BragStack API",
@@ -27,6 +29,7 @@ app.include_router(auth_router)
 app.include_router(entries_router)
 app.include_router(public_router)
 app.include_router(public_slug_router)
+app.include_router(impact_receipts_router)
 
 
 @app.get("/")

@@ -12,19 +12,61 @@ def normalize_slug(slug: str) -> str:
     """Normalize a public profile slug for lookup."""
     return slug.strip().lower()
 
+def parse_datetime(value):
+    """Convert MongoDB datetime or ISO datetime text into UTC datetime."""
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+
+        return value.astimezone(timezone.utc)
+
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+
+            return parsed.astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    return None
+
 
 def serialize_entry(entry: dict) -> dict:
-    """Convert a MongoDB brag entry document into an API response dictionary."""
+    """Convert a MongoDB brag entry into a safe public response."""
+
     return {
         "id": str(entry["_id"]),
         "title": entry.get("title", ""),
         "description": entry.get("description", ""),
         "category": entry.get("category", ""),
+        "entry_type": entry.get("entry_type", ""),
+        "entry_date": entry.get("entry_date", ""),
+        "situation": entry.get("situation", ""),
+        "action": entry.get("action", ""),
+        "impact": entry.get("impact", ""),
+        "lesson": entry.get("lesson", ""),
         "tags": entry.get("tags", []),
         "resume_bullet": entry.get("resume_bullet", ""),
         "is_public": entry.get("is_public", False),
         "created_at": entry.get("created_at"),
         "updated_at": entry.get("updated_at"),
+    }
+
+def serialize_public_profile(user: dict) -> dict:
+    """Return profile fields that are safe for public display."""
+
+    return {
+        "name": user.get("name", ""),
+        "public_slug": user.get("public_slug", ""),
+        "headline": user.get("headline", ""),
+        "bio": user.get("bio", ""),
+        "location": user.get("location", ""),
+        "github_url": user.get("github_url", ""),
+        "portfolio_url": user.get("portfolio_url", ""),
+        "resume_url": user.get("resume_url", ""),
     }
 
 
@@ -79,6 +121,15 @@ def get_public_brag_entries_by_slug(slug: str):
         ),
     }
 
+@router.get("/brag/{slug}/profile")
+def get_public_profile_by_slug(slug: str):
+    """Return the owner information for a public BragStack."""
+
+    user = get_user_by_public_slug(slug)
+
+    return {
+        "profile": serialize_public_profile(user),
+    }
 
 @router.get("/brag/{slug}/reports/weekly")
 def get_public_weekly_report_by_slug(slug: str):
@@ -86,9 +137,19 @@ def get_public_weekly_report_by_slug(slug: str):
     query = get_public_entry_query(slug)
 
     week_start = datetime.now(timezone.utc) - timedelta(days=7)
-    query["created_at"] = {"$gte": week_start.isoformat()}
+    entries = []
 
-    entries = list(entries_collection.find(query).sort("created_at", -1))
+    for entry in entries_collection.find(query):
+        created_at = parse_datetime(entry.get("created_at"))
+
+        if created_at is not None and created_at >= week_start:
+            entries.append(entry)
+
+    entries.sort(
+        key=lambda entry: parse_datetime(entry.get("created_at"))
+        or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
 
     categories = {}
     tags = {}

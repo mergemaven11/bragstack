@@ -54,6 +54,19 @@ export async function getCurrentUser() {
   return response.data;
 }
 
+export async function updateCurrentUserProfile(profile) {
+  const response = await api.patch("/auth/me/profile", profile);
+  return response.data;
+}
+
+export async function getPublicProfile(slug) {
+  const response = await api.get(
+    getPublicBragPath(slug, "/profile")
+  );
+
+  return response.data;
+}
+
 export async function getEntries() {
   const response = await api.get("/entries?limit=10&skip=0");
   return response.data;
@@ -106,5 +119,25 @@ export async function getPublicTagsSummary(slug) {
 
 export async function getPublicCategoriesSummary(slug) {
   const response = await api.get(getPublicBragPath(slug, "/categories/summary"));
+  return response.data;
+}
+
+export async function getImpactReceipts() {
+  const response = await api.get(
+    "/impact-receipts?limit=20&skip=0"
+  );
+
+  return response.data;
+}
+
+export async function createImpactReceiptFromEntry(
+  entryId,
+  payload
+) {
+  const response = await api.post(
+    `/impact-receipts/from-entry/${entryId}`,
+    payload
+  );
+
   return response.data;
 }

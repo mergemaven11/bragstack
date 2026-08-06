@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import re
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -42,6 +43,17 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class ProfileUpdateRequest(BaseModel):
+    """Editable public profile information."""
+
+    name: str = Field(..., min_length=1, max_length=80)
+    headline: str = Field(default="", max_length=120)
+    bio: str = Field(default="", max_length=500)
+    location: str = Field(default="", max_length=100)
+    github_url: str = Field(default="", max_length=300)
+    portfolio_url: str = Field(default="", max_length=300)
+    resume_url: str = Field(default="", max_length=300)
+
 def slugify(value: str) -> str:
     """Convert a display name into a URL-safe slug."""
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
@@ -49,16 +61,16 @@ def slugify(value: str) -> str:
 
 
 def generate_unique_public_slug(name: str) -> str:
-    """Generate a unique public profile slug for a new user."""
+    """Generate a stable, unique public profile slug."""
+
     base_slug = slugify(name)
-    slug = base_slug
-    counter = 2
 
-    while users_collection.find_one({"public_slug": slug}):
-        slug = f"{base_slug}-{counter}"
-        counter += 1
+    while True:
+        random_suffix = secrets.token_hex(3)
+        slug = f"{base_slug}-{random_suffix}"
 
-    return slug
+        if not users_collection.find_one({"public_slug": slug}):
+            return slug
 
 @router.post("/register")
 def register_user(payload: RegisterRequest):
@@ -138,12 +150,60 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @router.get("/me")
 def get_me(current_user: dict = Depends(get_current_user)):
-    """Return the currently authenticated user.
+    """Return the currently authenticated user."""
 
-    Args:
-        current_user: The authenticated user injected by the auth dependency.
+    current_slug = current_user.get("public_slug", "")
+    basic_name_slug = slugify(current_user.get("name", "user"))
 
-    Returns:
-        A serialized user dictionary.
-    """
+    if not current_slug or current_slug == basic_name_slug:
+        public_slug = generate_unique_public_slug(
+            current_user.get("name", "user")
+        )
+
+        users_collection.update_one(
+            {"_id": current_user["_id"]},
+            {"$set": {"public_slug": public_slug}},
+        )
+
+        current_user["public_slug"] = public_slug
+
     return serialize_user(current_user)
+
+@router.patch("/me/profile")
+def update_profile(
+    payload: ProfileUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update the authenticated user's public profile."""
+
+    updates = {
+        "name": payload.name.strip(),
+        "headline": payload.headline.strip(),
+        "bio": payload.bio.strip(),
+        "location": payload.location.strip(),
+        "github_url": payload.github_url.strip(),
+        "portfolio_url": payload.portfolio_url.strip(),
+        "resume_url": payload.resume_url.strip(),
+    }
+
+    url_fields = ("github_url", "portfolio_url", "resume_url")
+
+    for field_name in url_fields:
+        value = updates[field_name]
+
+        if value and not value.startswith(("http://", "https://")):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"{field_name} must start with http:// or https://",
+            )
+
+    users_collection.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": updates},
+    )
+
+    updated_user = users_collection.find_one(
+        {"_id": current_user["_id"]}
+    )
+
+    return serialize_user(updated_user)
