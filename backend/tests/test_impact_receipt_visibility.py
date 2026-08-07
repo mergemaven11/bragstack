@@ -66,6 +66,8 @@ def test_owner_can_toggle_receipt_visibility(receipt_context):
         }
     )
 
+    before_update = receipts.find_one({"_id": result.inserted_id})["updated_at"]
+
     response = client.patch(
         f"/impact-receipts/{result.inserted_id}",
         json={"is_public": True},
@@ -76,7 +78,8 @@ def test_owner_can_toggle_receipt_visibility(receipt_context):
 
     stored = receipts.find_one({"_id": result.inserted_id})
     assert stored["is_public"] is True
-    assert stored["updated_at"] >= now
+    assert isinstance(stored["updated_at"], datetime)
+    assert stored["updated_at"] >= before_update
 
 
 def test_public_receipts_hide_private_evidence(receipt_context):
