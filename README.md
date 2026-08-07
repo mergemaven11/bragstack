@@ -406,19 +406,30 @@ docker compose down -v
 
 ## Current Development Milestone
 
-The current milestone is **Impact Receipts V1**.
+### Impact Receipts V1 — Complete
 
-Planned V1 work:
+- [x] Complete editable-profile persistence testing
+- [x] Display saved profile information on public profiles
+- [x] Remove remaining hardcoded public-profile identity and links
+- [x] Create the first Impact Receipt backend model
+- [x] Convert an existing brag entry into an Impact Receipt
+- [x] Add a **Create Impact Receipt** action to entries
+- [x] Display the first Impact Receipt card
+- [x] Add receipt visibility controls
+- [x] Add receipt creation and update timestamps
+- [x] Expose public receipts without leaking private evidence
 
-- [ ] Complete editable-profile persistence testing
-- [ ] Display saved profile information on public profiles
-- [ ] Remove remaining hardcoded public-profile information
-- [ ] Create the first Impact Receipt backend model
-- [ ] Convert an existing brag entry into an Impact Receipt
-- [ ] Add a **Create Impact Receipt** action to entries
-- [ ] Display the first Impact Receipt card
-- [ ] Add receipt visibility controls
-- [ ] Add receipt creation and update timestamps
+### Reports Hub V1 — Complete
+
+- [x] Add a dedicated Reports Hub at `/app/reports`
+- [x] Add combined weekly reporting for entries and Impact Receipts
+- [x] Add an all-time career summary
+- [x] Add custom start/end date reports
+- [x] Base report periods on `entry_date` with timestamp fallback for older records
+- [x] Summarize accomplishments, receipts, evidence, confirmations, and public proof
+- [x] Summarize skills, categories, entry types, and trust signals
+- [x] Surface quantified results, career highlights, and reusable résumé bullets
+- [x] Add automated coverage for reports, profile persistence, receipt visibility, and public-evidence privacy
 
 ---
 

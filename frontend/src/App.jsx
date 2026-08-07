@@ -7,6 +7,7 @@ import { Pencil, Plus, Trash2, X } from "lucide-react";
 import AuthPage from "./AuthPage";
 import PublicBragPage from "./PublicBragPage";
 import LandingPage from "./LandingPage";
+import ReportsPage from "./ReportsPage";
 
 import {
   createEntry,
@@ -21,6 +22,7 @@ import {
   loginUser,
   registerUser,
   updateCurrentUserProfile,
+  updateImpactReceipt,
   updateEntry,
 } from "./api";
 import "./App.css";
@@ -71,6 +73,7 @@ function App() {
   const [creatingReceiptEntryId, setCreatingReceiptEntryId] = useState(null);
   const [receiptNotice, setReceiptNotice] = useState("");
   const [receiptError, setReceiptError] = useState("");
+  const [updatingReceiptId, setUpdatingReceiptId] = useState(null);
   const [weeklyReport, setWeeklyReport] = useState(null);
   const [tagsSummary, setTagsSummary] = useState(null);
   const [categoriesSummary, setCategoriesSummary] = useState(null);
@@ -89,6 +92,7 @@ function App() {
   const isPublicPage = path.startsWith("/brag");
   const isLoginPage = path === "/login";
   const isRegisterPage = path === "/register";
+  const isReportsPage = path === "/app/reports";
 
   async function loadDashboard() {
     try {
@@ -186,7 +190,8 @@ function App() {
       isLandingPage ||
       isPublicPage ||
       isLoginPage ||
-      isRegisterPage
+      isRegisterPage ||
+      isReportsPage
     ) {
       return;
     }
@@ -206,6 +211,7 @@ function App() {
     isPublicPage,
     isLoginPage,
     isRegisterPage,
+    isReportsPage,
   ]);
 
   function openCreateModal() {
@@ -336,6 +342,35 @@ function App() {
     }
   }
 
+  async function handleToggleReceiptVisibility(receipt) {
+    setUpdatingReceiptId(receipt.id);
+    setReceiptNotice("");
+    setReceiptError("");
+
+    try {
+      const nextVisibility = !receipt.is_public;
+
+      await updateImpactReceipt(receipt.id, {
+        is_public: nextVisibility,
+      });
+
+      await loadDashboard();
+      setReceiptNotice(
+        nextVisibility
+          ? "Impact Receipt is now public."
+          : "Impact Receipt is now private."
+      );
+    } catch (error) {
+      console.error(error);
+      setReceiptError(
+        error.response?.data?.detail ??
+          "Receipt visibility could not be updated."
+      );
+    } finally {
+      setUpdatingReceiptId(null);
+    }
+  }
+
   async function handleLogin(credentials) {
     const data = await loginUser(credentials);
     localStorage.setItem("bragstack_token", data.access_token);
@@ -377,6 +412,10 @@ function App() {
     );
   }
 
+  if (isReportsPage) {
+    return <ReportsPage />;
+  }
+
   const token = localStorage.getItem("bragstack_token");
 
   if (!token) {
@@ -403,6 +442,13 @@ function App() {
           <div className="hero-actions">
             <a className="btn primary" href="#entries">
               View proof
+            </a>
+
+            <a
+              className="btn secondary"
+              href="/app/reports"
+            >
+              Reports
             </a>
 
             <a
@@ -591,17 +637,34 @@ function App() {
                     <h3>{receipt.accomplishment}</h3>
                   </div>
 
-                  <span
-                    className={`visibility-badge ${
-                      receipt.is_public
-                        ? "public"
-                        : "private"
-                    }`}
-                  >
-                    {receipt.is_public
-                      ? "Public"
-                      : "Private"}
-                  </span>
+                  <div className="entry-actions">
+                    <span
+                      className={`visibility-badge ${
+                        receipt.is_public
+                          ? "public"
+                          : "private"
+                      }`}
+                    >
+                      {receipt.is_public
+                        ? "Public"
+                        : "Private"}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="profile-edit-button"
+                      disabled={updatingReceiptId === receipt.id}
+                      onClick={() =>
+                        handleToggleReceiptVisibility(receipt)
+                      }
+                    >
+                      {updatingReceiptId === receipt.id
+                        ? "Saving..."
+                        : receipt.is_public
+                          ? "Make private"
+                          : "Make public"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="impact-result-preview">
