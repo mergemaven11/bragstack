@@ -1,8 +1,12 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException
 
-from app.database import entries_collection, users_collection
+from app.database import (
+    entries_collection,
+    impact_receipts_collection,
+    users_collection,
+)
 
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -12,12 +16,12 @@ def normalize_slug(slug: str) -> str:
     """Normalize a public profile slug for lookup."""
     return slug.strip().lower()
 
+
 def parse_datetime(value):
     """Convert MongoDB datetime or ISO datetime text into UTC datetime."""
     if isinstance(value, datetime):
         if value.tzinfo is None:
             return value.replace(tzinfo=timezone.utc)
-
         return value.astimezone(timezone.utc)
 
     if isinstance(value, str):
@@ -32,6 +36,20 @@ def parse_datetime(value):
             return None
 
     return None
+
+
+def parse_work_date(entry: dict) -> date | None:
+    """Prefer entry_date and fall back to created_at for older records."""
+    entry_date = entry.get("entry_date")
+
+    if isinstance(entry_date, str) and entry_date.strip():
+        try:
+            return date.fromisoformat(entry_date.strip()[:10])
+        except ValueError:
+            pass
+
+    created_at = parse_datetime(entry.get("created_at"))
+    return created_at.date() if created_at else None
 
 
 def serialize_entry(entry: dict) -> dict:
@@ -55,6 +73,7 @@ def serialize_entry(entry: dict) -> dict:
         "updated_at": entry.get("updated_at"),
     }
 
+
 def serialize_public_profile(user: dict) -> dict:
     """Return profile fields that are safe for public display."""
 
@@ -67,6 +86,41 @@ def serialize_public_profile(user: dict) -> dict:
         "github_url": user.get("github_url", ""),
         "portfolio_url": user.get("portfolio_url", ""),
         "resume_url": user.get("resume_url", ""),
+    }
+
+
+def serialize_public_impact_receipt(receipt: dict) -> dict:
+    """Return only receipt fields that are safe for public presentation."""
+
+    public_evidence = [
+        {
+            "evidence_type": item.get("evidence_type", "other"),
+            "title": item.get("title", ""),
+            "reference": item.get("reference"),
+            "description": item.get("description"),
+        }
+        for item in receipt.get("evidence", [])
+        if item.get("is_public", False)
+    ]
+
+    confirmed_count = sum(
+        1
+        for confirmation in receipt.get("confirmations", [])
+        if confirmation.get("status") == "confirmed"
+    )
+
+    return {
+        "id": str(receipt["_id"]),
+        "source_entry_id": receipt.get("source_entry_id", ""),
+        "accomplishment": receipt.get("accomplishment", ""),
+        "contribution": receipt.get("contribution", ""),
+        "result": receipt.get("result", ""),
+        "skills": receipt.get("skills", []),
+        "evidence": public_evidence,
+        "trust_signals": receipt.get("trust_signals", ["self-documented"]),
+        "confirmed_count": confirmed_count,
+        "created_at": receipt.get("created_at"),
+        "updated_at": receipt.get("updated_at"),
     }
 
 
@@ -121,6 +175,7 @@ def get_public_brag_entries_by_slug(slug: str):
         ),
     }
 
+
 @router.get("/brag/{slug}/profile")
 def get_public_profile_by_slug(slug: str):
     """Return the owner information for a public BragStack."""
@@ -131,23 +186,51 @@ def get_public_profile_by_slug(slug: str):
         "profile": serialize_public_profile(user),
     }
 
+
+@router.get("/brag/{slug}/impact-receipts")
+def get_public_impact_receipts_by_slug(slug: str):
+    """Return public Impact Receipts without leaking private evidence."""
+
+    user = get_user_by_public_slug(slug)
+    query = {
+        "user_id": str(user["_id"]),
+        "is_public": True,
+    }
+
+    receipts = [
+        serialize_public_impact_receipt(receipt)
+        for receipt in impact_receipts_collection.find(query).sort("created_at", -1)
+    ]
+
+    return {
+        "slug": normalize_slug(slug),
+        "total_receipts": len(receipts),
+        "receipts": receipts,
+        "message": (
+            "No public Impact Receipts yet."
+            if not receipts
+            else "Public Impact Receipts loaded successfully."
+        ),
+    }
+
+
 @router.get("/brag/{slug}/reports/weekly")
 def get_public_weekly_report_by_slug(slug: str):
     """Generate a weekly public report for a specific user's public profile."""
     query = get_public_entry_query(slug)
 
-    week_start = datetime.now(timezone.utc) - timedelta(days=7)
+    today = datetime.now(timezone.utc).date()
+    week_start = today - timedelta(days=6)
     entries = []
 
     for entry in entries_collection.find(query):
-        created_at = parse_datetime(entry.get("created_at"))
+        work_date = parse_work_date(entry)
 
-        if created_at is not None and created_at >= week_start:
+        if work_date is not None and week_start <= work_date <= today:
             entries.append(entry)
 
     entries.sort(
-        key=lambda entry: parse_datetime(entry.get("created_at"))
-        or datetime.min.replace(tzinfo=timezone.utc),
+        key=lambda entry: parse_work_date(entry) or date.min,
         reverse=True,
     )
 
@@ -173,6 +256,7 @@ def get_public_weekly_report_by_slug(slug: str):
     return {
         "slug": normalize_slug(slug),
         "period": "last_7_days",
+        "date_basis": "entry_date",
         "total_entries": len(entries),
         "categories": sorted_categories,
         "top_tags": sorted_tags,
@@ -191,7 +275,6 @@ def get_public_tags_summary_by_slug(slug: str):
     query = get_public_entry_query(slug)
 
     entries = entries_collection.find(query)
-
     tag_counts = {}
 
     for entry in entries:
@@ -213,13 +296,13 @@ def get_public_tags_summary_by_slug(slug: str):
         ),
     }
 
+
 @router.get("/brag/{slug}/categories/summary")
 def get_public_categories_summary_by_slug(slug: str):
     """Generate a public category summary for a specific user's public profile."""
     query = get_public_entry_query(slug)
 
     entries = entries_collection.find(query)
-
     category_counts = {}
 
     for entry in entries:

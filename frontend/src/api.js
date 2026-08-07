@@ -141,3 +141,41 @@ export async function createImpactReceiptFromEntry(
 
   return response.data;
 }
+
+export async function updateImpactReceipt(receiptId, payload) {
+  const response = await api.patch(
+    `/impact-receipts/${receiptId}`,
+    payload
+  );
+
+  return response.data;
+}
+
+export async function getWeeklyCareerReport() {
+  const response = await api.get("/reports/weekly");
+  return response.data;
+}
+
+export async function getAllTimeCareerReport() {
+  const response = await api.get("/reports/all-time");
+  return response.data;
+}
+
+export async function getCustomCareerReport(startDate, endDate) {
+  const response = await api.get("/reports/custom", {
+    params: {
+      start_date: startDate,
+      end_date: endDate,
+    },
+  });
+
+  return response.data;
+}
+
+export async function getPublicImpactReceipts(slug) {
+  const response = await api.get(
+    getPublicBragPath(slug, "/impact-receipts")
+  );
+
+  return response.data;
+}
