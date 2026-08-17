@@ -4,7 +4,15 @@ function getDefaultApiBaseUrl() {
   const { hostname, protocol } = window.location;
 
   if (hostname.endsWith(".app.github.dev")) {
-    return `${protocol}//${hostname.replace(/-5173(?=\.app\.github\.dev$)/, "-8000")}`;
+    // Codespaces hostnames can include an arbitrary forwarded port suffix.
+    // Replace that final port suffix rather than assuming the frontend is
+    // always exposed specifically as `-5173`.
+    const codespacesHost = hostname.replace(
+      /-\d+(?=\.app\.github\.dev$)/,
+      "-8000"
+    );
+
+    return `${protocol}//${codespacesHost}`;
   }
 
   return "http://localhost:8000";
@@ -73,7 +81,6 @@ export async function getPublicProfile(slug) {
   const response = await api.get(
     getPublicBragPath(slug, "/profile")
   );
-
   return response.data;
 }
 
@@ -136,19 +143,14 @@ export async function getImpactReceipts() {
   const response = await api.get(
     "/impact-receipts?limit=20&skip=0"
   );
-
   return response.data;
 }
 
-export async function createImpactReceiptFromEntry(
-  entryId,
-  payload
-) {
+export async function createImpactReceiptFromEntry(entryId, payload) {
   const response = await api.post(
     `/impact-receipts/from-entry/${entryId}`,
     payload
   );
-
   return response.data;
 }
 
@@ -157,7 +159,6 @@ export async function updateImpactReceipt(receiptId, payload) {
     `/impact-receipts/${receiptId}`,
     payload
   );
-
   return response.data;
 }
 
@@ -178,7 +179,6 @@ export async function getCustomCareerReport(startDate, endDate) {
       end_date: endDate,
     },
   });
-
   return response.data;
 }
 
@@ -186,6 +186,5 @@ export async function getPublicImpactReceipts(slug) {
   const response = await api.get(
     getPublicBragPath(slug, "/impact-receipts")
   );
-
   return response.data;
 }
