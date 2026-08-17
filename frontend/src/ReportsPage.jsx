@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
+  Clipboard,
+  Download,
   FileText,
   RefreshCw,
+  Search,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -37,6 +40,75 @@ function formatLabel(value = "") {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function buildReportMarkdown(report) {
+  if (!report) {
+    return "";
+  }
+
+  const totals = report.totals ?? {};
+  const period = report.period ?? {};
+  const lines = [
+    "# BragStack Career Report",
+    "",
+    `**Period:** ${period.label ?? "Career report"}`,
+    period.start_date && period.end_date
+      ? `**Dates:** ${period.start_date} to ${period.end_date}`
+      : "**Dates:** All recorded work",
+    "",
+    report.summary ?? "",
+    "",
+    "## Metrics",
+    "",
+    `- Accomplishments: ${totals.entries ?? 0}`,
+    `- Impact Receipts: ${totals.impact_receipts ?? 0}`,
+    `- Evidence items: ${totals.evidence_items ?? 0}`,
+    `- Confirmed contributions: ${totals.confirmed_assertions ?? 0}`,
+    `- Quantified results: ${totals.quantified_results ?? 0}`,
+    `- Public proof: ${(totals.public_entries ?? 0) + (totals.public_receipts ?? 0)}`,
+    "",
+    "## Top Skills",
+    "",
+  ];
+
+  const skills = Object.entries(report.top_skills ?? {});
+  if (skills.length) {
+    skills.forEach(([skill, count]) => lines.push(`- ${skill}: ${count}`));
+  } else {
+    lines.push("- No skill data for this period.");
+  }
+
+  lines.push("", "## Career Highlights", "");
+  if (report.highlights?.length) {
+    report.highlights.forEach((highlight) => {
+      lines.push(`### ${highlight.title}`);
+      lines.push(`- Category: ${highlight.category ?? "Uncategorized"}`);
+      if (highlight.result) {
+        lines.push(`- Result: ${highlight.result}`);
+      }
+      if (highlight.skills?.length) {
+        lines.push(`- Skills: ${highlight.skills.join(", ")}`);
+      }
+      if (highlight.trust_signals?.length) {
+        lines.push(
+          `- Trust signals: ${highlight.trust_signals.map(formatLabel).join(", ")}`
+        );
+      }
+      lines.push("");
+    });
+  } else {
+    lines.push("No highlights for this period.", "");
+  }
+
+  lines.push("## Résumé Bullets", "");
+  if (report.resume_bullets?.length) {
+    report.resume_bullets.forEach((bullet) => lines.push(`- ${bullet}`));
+  } else {
+    lines.push("- No résumé bullets generated for this period.");
+  }
+
+  return `${lines.join("\n").trim()}\n`;
+}
+
 function ReportsPage() {
   const [activeType, setActiveType] = useState("weekly");
   const [report, setReport] = useState(null);
@@ -44,6 +116,8 @@ function ReportsPage() {
   const [error, setError] = useState("");
   const [startDate, setStartDate] = useState(getThirtyDaysAgo());
   const [endDate, setEndDate] = useState(getToday());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [copyNotice, setCopyNotice] = useState("");
 
   async function loadReport(type = activeType) {
     const token = localStorage.getItem("bragstack_token");
@@ -55,6 +129,7 @@ function ReportsPage() {
 
     setIsLoading(true);
     setError("");
+    setCopyNotice("");
 
     try {
       let data;
@@ -100,8 +175,33 @@ function ReportsPage() {
     [report]
   );
 
+  const filteredHighlights = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const highlights = report?.highlights ?? [];
+
+    if (!query) {
+      return highlights;
+    }
+
+    return highlights.filter((highlight) => {
+      const searchableText = [
+        highlight.title,
+        highlight.category,
+        highlight.result,
+        ...(highlight.skills ?? []),
+        ...(highlight.trust_signals ?? []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(query);
+    });
+  }, [report, searchQuery]);
+
   function handleTypeChange(type) {
     setActiveType(type);
+    setSearchQuery("");
 
     if (type !== "custom") {
       void loadReport(type);
@@ -111,7 +211,44 @@ function ReportsPage() {
   function handleCustomSubmit(event) {
     event.preventDefault();
     setActiveType("custom");
+    setSearchQuery("");
     void loadReport("custom");
+  }
+
+  async function copyText(text, message) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyNotice(message);
+    } catch (clipboardError) {
+      console.error(clipboardError);
+      setCopyNotice("Copy failed. Your browser may block clipboard access.");
+    }
+  }
+
+  function handleCopyReport() {
+    void copyText(buildReportMarkdown(report), "Markdown report copied.");
+  }
+
+  function handleCopyBullets() {
+    const bullets = report?.resume_bullets ?? [];
+    const text = bullets.map((bullet) => `- ${bullet}`).join("\n");
+    void copyText(text, "Résumé bullets copied.");
+  }
+
+  function handleDownloadReport() {
+    const markdown = buildReportMarkdown(report);
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const periodName = report?.period?.label?.toLowerCase().replace(/\s+/g, "-") || "career";
+
+    link.href = url;
+    link.download = `bragstack-${periodName}-report.md`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setCopyNotice("Markdown report downloaded.");
   }
 
   const totals = report?.totals ?? {};
@@ -214,6 +351,29 @@ function ReportsPage() {
             </span>
           </section>
 
+          <section className="report-export-bar" aria-label="Report exports">
+            <div>
+              <strong>Take your proof with you</strong>
+              <span>Copy reusable text or download a portable Markdown report.</span>
+            </div>
+            <div className="report-export-actions">
+              <button type="button" onClick={handleCopyBullets}>
+                <Clipboard size={16} />
+                Copy résumé bullets
+              </button>
+              <button type="button" onClick={handleCopyReport}>
+                <Clipboard size={16} />
+                Copy Markdown
+              </button>
+              <button type="button" onClick={handleDownloadReport}>
+                <Download size={16} />
+                Download .md
+              </button>
+            </div>
+          </section>
+
+          {copyNotice && <p className="report-copy-notice">{copyNotice}</p>}
+
           <section className="report-metrics">
             <article>
               <FileText size={20} />
@@ -299,12 +459,22 @@ function ReportsPage() {
                 <p className="reports-eyebrow">Career proof</p>
                 <h2>Highlights</h2>
               </div>
-              <span>{report.highlights?.length ?? 0} shown</span>
+              <span>{filteredHighlights.length} shown</span>
             </div>
 
-            {report.highlights?.length ? (
+            <label className="report-search">
+              <Search size={17} />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search title, category, skill, result, or trust signal"
+              />
+            </label>
+
+            {filteredHighlights.length ? (
               <div className="report-highlight-list">
-                {report.highlights.map((highlight) => (
+                {filteredHighlights.map((highlight) => (
                   <article key={highlight.entry_id}>
                     <div className="report-highlight-top">
                       <div>
@@ -342,7 +512,9 @@ function ReportsPage() {
               </div>
             ) : (
               <p className="report-muted">
-                No accomplishments were recorded for this period.
+                {searchQuery
+                  ? "No highlights match that search."
+                  : "No accomplishments were recorded for this period."}
               </p>
             )}
           </section>
