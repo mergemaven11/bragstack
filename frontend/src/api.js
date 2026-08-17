@@ -1,30 +1,19 @@
 import axios from "axios";
 
 function getDefaultApiBaseUrl() {
-  const { hostname, protocol } = window.location;
-
-  if (hostname.endsWith(".app.github.dev")) {
-    const codespacesHost = hostname.replace(
-      /-\d+(?=\.app\.github\.dev$)/,
-      "-8000"
-    );
-
-    return `${protocol}//${codespacesHost}`;
+  if (window.location.hostname.endsWith(".app.github.dev")) {
+    return "/api";
   }
 
-  return "http://localhost:8000";
+  return (
+    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:8000"
+  );
 }
 
-const isCodespaces = window.location.hostname.endsWith(".app.github.dev");
-
-const API_BASE_URL = isCodespaces
-  ? getDefaultApiBaseUrl()
-  : import.meta.env.VITE_API_BASE_URL ||
-    import.meta.env.VITE_API_URL ||
-    getDefaultApiBaseUrl();
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getDefaultApiBaseUrl(),
 });
 
 function getPublicBragPath(slug, suffix = "") {
@@ -78,9 +67,7 @@ export async function updateCurrentUserProfile(profile) {
 }
 
 export async function getPublicProfile(slug) {
-  const response = await api.get(
-    getPublicBragPath(slug, "/profile")
-  );
+  const response = await api.get(getPublicBragPath(slug, "/profile"));
   return response.data;
 }
 
@@ -140,25 +127,17 @@ export async function getPublicCategoriesSummary(slug) {
 }
 
 export async function getImpactReceipts() {
-  const response = await api.get(
-    "/impact-receipts?limit=20&skip=0"
-  );
+  const response = await api.get("/impact-receipts?limit=20&skip=0");
   return response.data;
 }
 
 export async function createImpactReceiptFromEntry(entryId, payload) {
-  const response = await api.post(
-    `/impact-receipts/from-entry/${entryId}`,
-    payload
-  );
+  const response = await api.post(`/impact-receipts/from-entry/${entryId}`, payload);
   return response.data;
 }
 
 export async function updateImpactReceipt(receiptId, payload) {
-  const response = await api.patch(
-    `/impact-receipts/${receiptId}`,
-    payload
-  );
+  const response = await api.patch(`/impact-receipts/${receiptId}`, payload);
   return response.data;
 }
 
@@ -183,8 +162,6 @@ export async function getCustomCareerReport(startDate, endDate) {
 }
 
 export async function getPublicImpactReceipts(slug) {
-  const response = await api.get(
-    getPublicBragPath(slug, "/impact-receipts")
-  );
+  const response = await api.get(getPublicBragPath(slug, "/impact-receipts"));
   return response.data;
 }
