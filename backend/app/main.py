@@ -37,4 +37,4 @@ app.include_router(reports_router)
 @app.get("/")
 def root():
     """Return a basic API health check."""
-    return {"message": "BragStack API is running", "version": "1.0.0"}
+    return {"message": "BragStack API is running"}
