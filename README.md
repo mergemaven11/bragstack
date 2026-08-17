@@ -2,124 +2,102 @@
 
 > **Don’t just claim your impact. Stack the proof.**
 
-BragStack is a career-proof platform that helps people document their work, preserve evidence of their contributions, and turn real accomplishments into useful career materials.
+BragStack is an evidence-backed career-proof platform for turning day-to-day work into portable, reusable proof of impact.
 
-Users can record wins throughout the year, organize measurable impact, publish selected accomplishments, and maintain a portable professional record.
+Instead of trying to reconstruct a year of work before a performance review or interview, users can record accomplishments as they happen, convert meaningful wins into **Impact Receipts**, and generate career reports they can reuse for reviews, résumés, interviews, portfolios, and promotion conversations.
 
-BragStack is evolving around a core concept called **Impact Receipts**: structured, evidence-backed records showing what someone contributed, what changed, and why it mattered.
+## What makes BragStack different
 
----
+Most career trackers stop at notes or résumé bullets. BragStack adds a trust layer.
 
-## Why BragStack?
+```text
+Brag Entry
+    ↓
+Impact Receipt
+    ↓
+Evidence + Shared Credit + Trust Signals
+    ↓
+Career Report / Public Proof
+```
 
-Important work is often forgotten, overlooked, or difficult to reconstruct later.
+An **Impact Receipt** captures:
 
-People regularly struggle to remember specific examples when preparing for:
+- the accomplishment
+- the owner’s specific contribution
+- the result or measurable impact
+- supporting evidence
+- demonstrated skills
+- shared credit for collaborators
+- confirmation and trust signals
+- public/private visibility
 
-- Promotions
-- Performance reviews
-- Interviews
-- One-on-one meetings
-- Client reports
-- Résumé updates
-- Portfolio updates
-- Career transitions
-
-BragStack helps users capture accomplishments while the details are still fresh.
-
-Every win can be documented. Significant wins can become **Impact Receipts**.
-
----
-
-## Who BragStack Is For
-
-### Promotions
-
-Walk into promotion conversations with organized proof of impact, growth, ownership, and added responsibilities.
-
-### Interviews
-
-Turn real accomplishments into confident interview stories instead of trying to remember examples under pressure.
-
-### Performance Reviews
-
-Build a review throughout the year instead of reconstructing twelve months of work the night before.
-
-### One-on-One Meetings
-
-Bring wins, blockers, lessons, and progress into conversations with managers.
-
-### Trainers and Clients
-
-Document milestones, completed goals, progress, and measurable results over time.
-
-### Freelancers and Consultants
-
-Turn completed projects into client updates, case studies, testimonials, and proof of value.
-
-### Students and Career Changers
-
-Track projects, certifications, new skills, and portfolio evidence while developing a career.
-
-### Creators and Founders
-
-Capture launches, experiments, customer wins, audience growth, partnerships, and business milestones.
+That turns a claim like “improved reliability” into a structured record that can show what happened, who did what, what changed, and what supports the claim.
 
 ---
 
-## Current Features
+## BragStack V1
+
+BragStack V1 includes the complete core flow from accomplishment capture to career output.
 
 ### Accounts and Profiles
 
 - User registration and login
-- JWT-based authentication
+- JWT authentication
 - User-owned private data
 - Editable professional profiles
-- Professional headline and biography
-- Location
+- Professional headline, bio, and location
 - GitHub, portfolio, and résumé links
 - Unique public profile URLs
 
 ### Accomplishment Tracking
 
-- Create brag entries
-- Edit existing entries
-- Delete entries
-- Categorize accomplishments
-- Add entry dates and entry types
+- Create, edit, and delete brag entries
 - Record situation, action, impact, and lessons
+- Categorize accomplishments
+- Add work dates and entry types
 - Add skill tags
-- Mark entries as public or private
-- Generate résumé-style accomplishment bullets
+- Public/private visibility controls
+- Generate reusable résumé-style bullets
 
-### Reports and Summaries
+### Impact Receipts
 
-- Weekly accomplishment reports
-- Skill-tag summaries
-- Category summaries
-- Recent accomplishment dashboard
+- Convert an existing accomplishment into an Impact Receipt
+- Store contribution and result separately
+- Add evidence metadata
+- Track demonstrated skills
+- Record shared credit
+- Track confirmations and trust signals
+- Public/private receipt visibility
+- Creation and update timestamps
+- Public receipt data excludes private evidence by default
+
+### Reports Hub
+
+- Weekly career reports
+- All-time career summaries
+- Custom date-range reports
+- Combined accomplishment and Impact Receipt metrics
+- Evidence and confirmation counts
+- Skill and category summaries
+- Quantified-result tracking
+- Career highlights
+- Reusable résumé bullets
+- Highlight search by title, category, skill, result, or trust signal
+- Copy résumé bullets
+- Copy full reports as Markdown
+- Download portable Markdown reports
 
 ### Public Career Proof
 
-- Public BragStack profiles
+- Shareable public BragStack profile
 - Public-only accomplishment filtering
-- Shareable profile URLs
-- Public and private visibility controls
-
-### Product Experience
-
-- Marketing landing page
-- Responsive React interface
-- Docker Compose development environment
-- FastAPI interactive API documentation
+- Public Impact Receipts
+- Public skill/category summaries
+- Privacy controls that keep non-public evidence out of public responses
 
 ---
 
-## Impact Receipts
-
-Impact Receipts are the planned core feature of BragStack.
-
-An Impact Receipt is a structured record of a meaningful contribution.
+## Impact Receipt Example
 
 ```text
 IMPACT RECEIPT
@@ -147,103 +125,56 @@ Tee — Root-cause analysis
 Jordan — Testing
 Maria — Deployment
 
-Confirmed by:
-✓ Collaborator
-✓ Manager
+Trust signals:
+✓ Self-documented
+✓ Evidence-linked
+✓ Collaborator-confirmed
 ```
 
-Impact Receipts will help users document:
-
-- What happened
-- What they personally contributed
-- What changed because of the work
-- Which skills were demonstrated
-- What evidence supports the claim
-- Who else contributed
-- Who confirmed the contribution
-
----
-
-## Impact Receipt Trust Signals
-
-Impact Receipts will support progressive trust signals.
+### Trust signals
 
 | Trust signal | Meaning |
 |---|---|
 | Self-documented | Entered by the owner |
-| Evidence-linked | Includes tickets, documents, pull requests, feedback, or other evidence |
-| Collaborator-confirmed | A teammate or collaborator confirms the contribution |
-| Stakeholder-verified | A manager, client, instructor, trainer, or other stakeholder verifies the claim |
+| Evidence-linked | Includes supporting evidence |
+| Collaborator-confirmed | A collaborator confirms the contribution |
+| Stakeholder-verified | A manager, client, instructor, or stakeholder verifies it |
 | Organization-issued | An organization formally recognizes the accomplishment |
 
-These signals will remain separate so BragStack can clearly communicate what has and has not been verified.
+Trust signals remain separate so BragStack can clearly communicate what has and has not been independently verified.
 
 ---
 
-## Shared Credit
+## Why this matters
 
-Real work is collaborative.
+Important work is easy to forget and hard to reconstruct later. BragStack is designed for people preparing for:
 
-BragStack will allow multiple contributors to receive accurate credit for different parts of the same outcome.
+- promotions
+- performance reviews
+- interviews
+- one-on-one meetings
+- résumé updates
+- portfolio updates
+- consulting/client reports
+- career transitions
+
+It is also useful for students, career changers, freelancers, founders, and creators who need a durable record of projects, milestones, skills, and outcomes.
+
+---
+
+## Architecture
 
 ```text
-Project outcome:
-Successful production recovery
-
-Tee:
-Diagnosed the production failures
-
-Jordan:
-Implemented and tested the backend fix
-
-Maria:
-Coordinated the customer rollout
-
-Alex:
-Documented the recovery process
+React + Vite frontend
+        │
+        ▼
+FastAPI REST API
+        │
+        ▼
+MongoDB
 ```
 
-Each contributor can receive a related Impact Receipt without claiming the entire project.
-
----
-
-## Product Model
-
-BragStack follows a simple product flow:
-
-```text
-Brag Entry
-    ↓
-Impact Receipt
-    ↓
-Career Output
-```
-
-### Brag Entry
-
-A fast way to record everyday wins, progress, lessons, and responsibilities.
-
-### Impact Receipt
-
-A significant accomplishment enhanced with evidence, contribution details, shared credit, and verification.
-
-### Career Output
-
-Impact Receipts can later power:
-
-- Promotion packets
-- Performance-review summaries
-- Interview stories
-- Résumé bullets
-- Client reports
-- Case studies
-- Public proof cards
-- Embedded portfolios
-- Team impact dashboards
-
----
-
-## Technology Stack
+The application runs locally through Docker Compose and uses GitHub Actions for automated backend validation.
 
 ### Frontend
 
@@ -261,7 +192,7 @@ Impact Receipts can later power:
 - PyMongo
 - JWT authentication
 
-### Data and Infrastructure
+### Infrastructure
 
 - MongoDB
 - Docker
@@ -283,6 +214,8 @@ bragstack/
 │   │   ├── routes.py
 │   │   ├── auth.py
 │   │   ├── auth_routes.py
+│   │   ├── impact_receipt_routes.py
+│   │   ├── reports_routes.py
 │   │   └── public_slug_routes.py
 │   ├── tests/
 │   ├── Dockerfile
@@ -294,19 +227,22 @@ bragstack/
 │   │   ├── api.js
 │   │   ├── AuthPage.jsx
 │   │   ├── LandingPage.jsx
-│   │   └── PublicBragPage.jsx
+│   │   ├── PublicBragPage.jsx
+│   │   └── ReportsPage.jsx
 │   ├── Dockerfile
 │   └── package.json
 ├── docker-compose.yml
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
 ---
 
-## Run BragStack Locally
+## Run locally
 
-Make sure Docker is installed and running.
+### Requirements
+
+- Docker
+- Docker Compose
 
 From the project root:
 
@@ -314,7 +250,7 @@ From the project root:
 docker compose up -d --build
 ```
 
-Check the containers:
+Check container status:
 
 ```bash
 docker compose ps
@@ -326,41 +262,39 @@ Open the frontend:
 http://localhost:5173
 ```
 
-Open the API documentation:
+Open interactive API documentation:
 
 ```text
 http://localhost:8000/docs
 ```
 
----
+### Development commands
 
-## Development Commands
-
-### Build the Frontend
+Build the frontend:
 
 ```bash
 docker compose exec frontend npm run build
 ```
 
-### Run Backend Tests
+Run frontend linting:
+
+```bash
+docker compose exec frontend npm run lint
+```
+
+Run backend tests:
 
 ```bash
 docker compose exec api pytest
 ```
 
-### Restart the API
-
-```bash
-docker compose restart api
-```
-
-### Stop BragStack
+Stop BragStack:
 
 ```bash
 docker compose down
 ```
 
-### Remove Containers and Local MongoDB Data
+Remove containers and local MongoDB data:
 
 ```bash
 docker compose down -v
@@ -377,20 +311,29 @@ docker compose down -v
 | `POST` | `/auth/register` | Register a user |
 | `POST` | `/auth/login` | Log in |
 | `GET` | `/auth/me` | Get the authenticated user |
-| `PATCH` | `/auth/me/profile` | Update the authenticated user’s profile |
+| `PATCH` | `/auth/me/profile` | Update the authenticated profile |
 
 ### Accomplishments
 
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/entries` | Create an accomplishment |
-| `GET` | `/entries` | List the authenticated user’s accomplishments |
+| `GET` | `/entries` | List accomplishments |
 | `GET` | `/entries/{entry_id}` | View one accomplishment |
 | `PUT` | `/entries/{entry_id}` | Update an accomplishment |
 | `DELETE` | `/entries/{entry_id}` | Delete an accomplishment |
-| `GET` | `/entries/reports/weekly` | Generate a weekly report |
-| `GET` | `/entries/tags/summary` | Summarize skill tags |
-| `GET` | `/entries/categories/summary` | Summarize categories |
+
+### Impact Receipts
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/impact-receipts/from-entry/{entry_id}` | Convert an entry into an Impact Receipt |
+| `GET` | `/impact-receipts` | List owned Impact Receipts |
+| `PATCH` | `/impact-receipts/{receipt_id}` | Update an Impact Receipt |
+
+### Reports
+
+The Reports Hub exposes authenticated weekly, all-time, and custom-period career reporting endpoints used by `/app/reports`.
 
 ### Public Profiles
 
@@ -398,124 +341,69 @@ docker compose down -v
 |---|---|---|
 | `GET` | `/public/brag/{slug}` | View public accomplishments |
 | `GET` | `/public/brag/{slug}/profile` | View public profile information |
-| `GET` | `/public/brag/{slug}/reports/weekly` | View the public weekly report |
+| `GET` | `/public/brag/{slug}/reports/weekly` | View public weekly report |
 | `GET` | `/public/brag/{slug}/tags/summary` | View public skill summaries |
 | `GET` | `/public/brag/{slug}/categories/summary` | View public category summaries |
 
 ---
 
-## Current Development Milestone
+## Privacy and product principles
 
-### Impact Receipts V1 — Complete
+BragStack is designed around a few non-negotiable ideas:
 
-- [x] Complete editable-profile persistence testing
-- [x] Display saved profile information on public profiles
-- [x] Remove remaining hardcoded public-profile identity and links
-- [x] Create the first Impact Receipt backend model
-- [x] Convert an existing brag entry into an Impact Receipt
-- [x] Add a **Create Impact Receipt** action to entries
-- [x] Display the first Impact Receipt card
-- [x] Add receipt visibility controls
-- [x] Add receipt creation and update timestamps
-- [x] Expose public receipts without leaking private evidence
-
-### Reports Hub V1 — Complete
-
-- [x] Add a dedicated Reports Hub at `/app/reports`
-- [x] Add combined weekly reporting for entries and Impact Receipts
-- [x] Add an all-time career summary
-- [x] Add custom start/end date reports
-- [x] Base report periods on `entry_date` with timestamp fallback for older records
-- [x] Summarize accomplishments, receipts, evidence, confirmations, and public proof
-- [x] Summarize skills, categories, entry types, and trust signals
-- [x] Surface quantified results, career highlights, and reusable résumé bullets
-- [x] Add automated coverage for reports, profile persistence, receipt visibility, and public-evidence privacy
-
----
-
-## Roadmap
-
-### Impact Receipts V1
-
-- Structured accomplishment records
-- Individual contribution details
-- Results and measurable impact
-- Skills backed by accomplishments
-- Public and private receipt cards
-
-### Evidence
-
-- Evidence links
-- GitHub pull requests
-- Jira and Zendesk tickets
-- Documentation
-- Customer feedback
-- File attachments
-
-### Shared Credit and Confirmation
-
-- Contributor invitations
-- Individual contribution roles
-- Collaborator confirmation
-- Stakeholder verification
-- Verification history
-- Revocation and correction workflows
-
-### Career Outputs
-
-- Review Packet Generator
-- Promotion packets
-- Interview-story generation
-- Résumé exports
-- Client impact reports
-- Markdown and PDF exports
-
-### Teams and Organizations
-
-- Organizations
-- Teams
-- Invitations
-- Member roles
-- Manager workflows
-- Team impact dashboards
-- Custom review templates
-
-### Integrations and Enterprise
-
-- GitHub integration
-- Jira integration
-- Zendesk integration
-- Slack integration
-- Compact iframe embeds
-- SSO
-- Audit logs
-- Enterprise permissions
-- Verifiable credentials
-
----
-
-## Product Principles
-
-BragStack is being designed around several principles:
-
-1. **Employees control their career proof.**
-2. **Sensitive workplace evidence should remain private by default.**
+1. **Users control their career proof.**
+2. **Sensitive workplace evidence stays private by default.**
 3. **Imported activity should require user approval.**
-4. **Shared work should receive shared credit.**
-5. **Verification should clearly state what was confirmed.**
-6. **BragStack should support existing HR systems instead of forcing companies to replace them.**
-7. **The product should reveal overlooked work without becoming workplace surveillance.**
+4. **Shared work deserves shared credit.**
+5. **Verification must clearly state what was actually confirmed.**
+6. **BragStack should complement existing HR systems, not require replacing them.**
+7. **Career visibility should not become workplace surveillance.**
+
+---
+
+## V1 status
+
+### Complete
+
+- [x] Authentication and private user data
+- [x] Editable public profiles
+- [x] Accomplishment CRUD
+- [x] Public/private accomplishment controls
+- [x] Impact Receipts V1
+- [x] Evidence metadata and shared credit model
+- [x] Trust-signal model
+- [x] Public receipt privacy controls
+- [x] Reports Hub V1
+- [x] Weekly, all-time, and custom reports
+- [x] Résumé bullet output
+- [x] Markdown report export
+- [x] Report highlight search
+- [x] Automated backend coverage for reports, profiles, receipt visibility, and public privacy
+
+### Future roadmap
+
+These are deliberate post-V1 extensions, not unfinished V1 requirements:
+
+- richer Impact Receipt editing UX
+- direct GitHub/Jira/Zendesk integrations
+- collaborator invitations and confirmation workflows
+- review and promotion packet generators
+- PDF export
+- organizations and teams
+- manager workflows and team impact dashboards
+- SSO, audit logs, and enterprise permissions
+- verifiable credentials
 
 ---
 
 ## Vision
 
-BragStack is where work becomes portable, shared-credit, verifiable career proof.
+BragStack is a portable record of real work: what happened, what you contributed, what changed, what proves it, and how that work can be reused throughout your career.
 
-The long-term goal is to give every person a living record of their contributions while helping organizations recognize impact that traditional performance systems often miss.
+The long-term goal is simple: make meaningful work easier to remember, explain, verify, and carry forward.
 
 ---
 
 ## Author
 
-Built by Tee as a SaaS product focused on career proof, workplace impact, backend development, Docker, MongoDB, and modern product engineering.
+Built by Tee as a SaaS product focused on career proof, workplace impact, backend development, Docker, MongoDB, React, FastAPI, and modern product engineering.

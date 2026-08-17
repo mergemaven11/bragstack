@@ -10,8 +10,8 @@ from app.routes import public_router, router as entries_router
 
 app = FastAPI(
     title="BragStack API",
-    description="A SaaS-style tool for tracking career wins, skills, and resume proof.",
-    version="0.2.0",
+    description="Evidence-backed career proof for accomplishments, impact, and reports.",
+    version="1.0.0",
 )
 
 app.add_middleware(
