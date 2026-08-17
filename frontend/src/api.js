@@ -1,9 +1,19 @@
 import axios from "axios";
 
+function getDefaultApiBaseUrl() {
+  const { hostname, protocol } = window.location;
+
+  if (hostname.endsWith(".app.github.dev")) {
+    return `${protocol}//${hostname.replace(/-5173(?=\.app\.github\.dev$)/, "-8000")}`;
+  }
+
+  return "http://localhost:8000";
+}
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  "http://localhost:8000";
+  getDefaultApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
