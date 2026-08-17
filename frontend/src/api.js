@@ -4,9 +4,6 @@ function getDefaultApiBaseUrl() {
   const { hostname, protocol } = window.location;
 
   if (hostname.endsWith(".app.github.dev")) {
-    // Codespaces hostnames can include an arbitrary forwarded port suffix.
-    // Replace that final port suffix rather than assuming the frontend is
-    // always exposed specifically as `-5173`.
     const codespacesHost = hostname.replace(
       /-\d+(?=\.app\.github\.dev$)/,
       "-8000"
@@ -18,10 +15,13 @@ function getDefaultApiBaseUrl() {
   return "http://localhost:8000";
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  getDefaultApiBaseUrl();
+const isCodespaces = window.location.hostname.endsWith(".app.github.dev");
+
+const API_BASE_URL = isCodespaces
+  ? getDefaultApiBaseUrl()
+  : import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_API_URL ||
+    getDefaultApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
