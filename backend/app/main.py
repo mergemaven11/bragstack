@@ -10,8 +10,8 @@ from app.routes import public_router, router as entries_router
 
 app = FastAPI(
     title="BragStack API",
-    description="A SaaS-style tool for tracking career wins, skills, and resume proof.",
-    version="0.2.0",
+    description="Evidence-backed career proof for accomplishments, impact, and reports.",
+    version="1.0.0",
 )
 
 app.add_middleware(
@@ -37,4 +37,4 @@ app.include_router(reports_router)
 @app.get("/")
 def root():
     """Return a basic API health check."""
-    return {"message": "BragStack API is running"}
+    return {"message": "BragStack API is running", "version": "1.0.0"}
