@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.database import (
     entries_collection,
@@ -154,24 +154,71 @@ def get_public_entry_query(slug: str) -> dict:
     }
 
 
-@router.get("/brag/{slug}")
-def get_public_brag_entries_by_slug(slug: str):
-    """Return public brag entries for a specific user's public profile."""
-    query = get_public_entry_query(slug)
+def get_monthly_activity(query: dict) -> list[dict]:
+    """Return accomplishment counts for the current month and five prior months."""
+    today = datetime.now(timezone.utc).date()
+    months = []
 
-    entries = [
-        serialize_entry(entry)
-        for entry in entries_collection.find(query).sort("created_at", -1)
-    ]
+    for offset in range(5, -1, -1):
+        year = today.year
+        month = today.month - offset
+
+        while month <= 0:
+            month += 12
+            year -= 1
+
+        months.append(
+            {
+                "key": f"{year:04d}-{month:02d}",
+                "label": datetime(year, month, 1).strftime("%b"),
+                "count": 0,
+            }
+        )
+
+    month_lookup = {item["key"]: item for item in months}
+
+    for entry in entries_collection.find(query):
+        work_date = parse_work_date(entry)
+        if work_date is None:
+            continue
+
+        key = f"{work_date.year:04d}-{work_date.month:02d}"
+        if key in month_lookup:
+            month_lookup[key]["count"] += 1
+
+    return months
+
+
+@router.get("/brag/{slug}")
+def get_public_brag_entries_by_slug(
+    slug: str,
+    limit: int = Query(default=6, ge=1, le=50),
+    skip: int = Query(default=0, ge=0),
+):
+    """Return paginated public brag entries for a user's Proof Profile."""
+    query = get_public_entry_query(slug)
+    total_entries = entries_collection.count_documents(query)
+    cursor = (
+        entries_collection.find(query)
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    )
+    entries = [serialize_entry(entry) for entry in cursor]
 
     return {
         "slug": normalize_slug(slug),
-        "total_entries": len(entries),
+        "total_entries": total_entries,
+        "limit": limit,
+        "skip": skip,
+        "returned_entries": len(entries),
+        "has_more": skip + limit < total_entries,
+        "activity_last_6_months": get_monthly_activity(query),
         "entries": entries,
         "message": (
             "No public entries yet."
-            if not entries
-            else "Public brag entries loaded successfully."
+            if total_entries == 0
+            else "Public proof entries loaded successfully."
         ),
     }
 
