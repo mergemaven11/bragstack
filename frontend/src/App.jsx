@@ -1,6 +1,3 @@
-
-
-
 import { useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 
@@ -27,6 +24,7 @@ import {
 } from "./api";
 import "./App.css";
 
+const DASHBOARD_PAGE_SIZE = 5;
 const ENTRY_TYPES = [
   "Current Job",
   "Previous Job",
@@ -69,6 +67,7 @@ const EMPTY_PROFILE_FORM = {
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [entries, setEntries] = useState([]);
+  const [entriesMeta, setEntriesMeta] = useState({ total_entries: 0 });
   const [impactReceipts, setImpactReceipts] = useState([]);
   const [creatingReceiptEntryId, setCreatingReceiptEntryId] = useState(null);
   const [receiptNotice, setReceiptNotice] = useState("");
@@ -93,6 +92,10 @@ function App() {
   const isLoginPage = path === "/login";
   const isRegisterPage = path === "/register";
   const isReportsPage = path === "/app/reports";
+  const dashboardPage = Math.max(
+    1,
+    Number(new URLSearchParams(window.location.search).get("page")) || 1,
+  );
 
   async function loadDashboard() {
     try {
@@ -105,7 +108,10 @@ function App() {
         categoriesData,
       ] = await Promise.all([
         getCurrentUser(),
-        getEntries(),
+        getEntries(
+          DASHBOARD_PAGE_SIZE,
+          (dashboardPage - 1) * DASHBOARD_PAGE_SIZE,
+        ),
         getImpactReceipts(),
         getWeeklyReport(),
         getTagsSummary(),
@@ -114,6 +120,9 @@ function App() {
 
       setCurrentUser(userData);
       setEntries(entriesData.entries ?? []);
+      setEntriesMeta({
+        total_entries: entriesData.total_entries ?? 0,
+      });
       setImpactReceipts(receiptsData.receipts ?? []);
       setWeeklyReport(weeklyData);
       setTagsSummary(tagsData);
@@ -176,7 +185,7 @@ function App() {
 
       setProfileError(
         error.response?.data?.detail ??
-          "Your profile could not be saved."
+          "Your profile could not be saved.",
       );
     } finally {
       setIsSavingProfile(false);
@@ -212,6 +221,7 @@ function App() {
     isLoginPage,
     isRegisterPage,
     isReportsPage,
+    dashboardPage,
   ]);
 
   function openCreateModal() {
@@ -328,13 +338,11 @@ function App() {
       console.error(error);
 
       if (error.response?.status === 409) {
-        setReceiptError(
-          "This entry already has an Impact Receipt."
-        );
+        setReceiptError("This entry already has an Impact Receipt.");
       } else {
         setReceiptError(
           error.response?.data?.detail ??
-            "The Impact Receipt could not be created."
+            "The Impact Receipt could not be created.",
         );
       }
     } finally {
@@ -358,13 +366,13 @@ function App() {
       setReceiptNotice(
         nextVisibility
           ? "Impact Receipt is now public."
-          : "Impact Receipt is now private."
+          : "Impact Receipt is now private.",
       );
     } catch (error) {
       console.error(error);
       setReceiptError(
         error.response?.data?.detail ??
-          "Receipt visibility could not be updated."
+          "Receipt visibility could not be updated.",
       );
     } finally {
       setUpdatingReceiptId(null);
@@ -383,12 +391,10 @@ function App() {
     window.location.href = "/app";
   }
 
-  const topTags = tagsSummary?.tags
-    ? Object.entries(tagsSummary.tags)
-    : [];
+  const topTags = tagsSummary?.tags ? Object.entries(tagsSummary.tags) : [];
 
   const receiptSourceEntryIds = new Set(
-    impactReceipts.map((receipt) => receipt.source_entry_id)
+    impactReceipts.map((receipt) => receipt.source_entry_id),
   );
 
   if (isPublicPage) {
@@ -404,12 +410,7 @@ function App() {
   }
 
   if (isRegisterPage) {
-    return (
-      <AuthPage
-        mode="register"
-        onRegister={handleRegister}
-      />
-    );
+    return <AuthPage mode="register" onRegister={handleRegister} />;
   }
 
   if (isReportsPage) {
@@ -421,6 +422,18 @@ function App() {
   if (!token) {
     return null;
   }
+
+  const totalDashboardPages = Math.max(
+    1,
+    Math.ceil(entriesMeta.total_entries / DASHBOARD_PAGE_SIZE),
+  );
+  const dashboardStart = entriesMeta.total_entries
+    ? (dashboardPage - 1) * DASHBOARD_PAGE_SIZE + 1
+    : 0;
+  const dashboardEnd = Math.min(
+    dashboardPage * DASHBOARD_PAGE_SIZE,
+    entriesMeta.total_entries,
+  );
 
   return (
     <main className="page">
@@ -434,9 +447,8 @@ function App() {
           </h1>
 
           <p>
-            Track technical wins, skill growth, resume bullets,
-            and project evidence in one clean portfolio-ready
-            space.
+            Track technical wins, skill growth, resume bullets, and project
+            evidence in one clean portfolio-ready space.
           </p>
 
           <div className="hero-actions">
@@ -444,10 +456,7 @@ function App() {
               View proof
             </a>
 
-            <a
-              className="btn secondary"
-              href="/app/reports"
-            >
+            <a className="btn secondary" href="/app/reports">
               Reports
             </a>
 
@@ -464,7 +473,7 @@ function App() {
 
         <aside className="profile-card">
           <div className="profile-card-heading">
-            <p className="mini-label">Public Proof Card</p>
+            <p className="mini-label">Proof Profile Card</p>
 
             <button
               type="button"
@@ -491,14 +500,10 @@ function App() {
               "Add a professional headline to introduce yourself."}
           </p>
 
-          {currentUser?.bio && (
-            <p className="profile-bio">{currentUser.bio}</p>
-          )}
+          {currentUser?.bio && <p className="profile-bio">{currentUser.bio}</p>}
 
           {currentUser?.location && (
-            <p className="profile-location">
-              {currentUser.location}
-            </p>
+            <p className="profile-location">{currentUser.location}</p>
           )}
 
           <div className="proof-links">
@@ -508,7 +513,7 @@ function App() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Public BragStack <span>View profile</span>
+                Proof Profile <span>View profile</span>
               </a>
             )}
 
@@ -548,9 +553,7 @@ function App() {
       {isOffline && (
         <section className="notice">
           <strong>Connection problem</strong>
-          <span>
-            BragStack could not load all dashboard data.
-          </span>
+          <span>BragStack could not load all dashboard data.</span>
         </section>
       )}
 
@@ -563,100 +566,71 @@ function App() {
 
         <article className="stat-card">
           <p>Unique Tags</p>
-          <strong>
-            {tagsSummary?.total_unique_tags ?? 0}
-          </strong>
+          <strong>{tagsSummary?.total_unique_tags ?? 0}</strong>
           <span>Skills tracked across entries</span>
         </article>
 
         <article className="stat-card">
           <p>Categories</p>
-          <strong>
-            {categoriesSummary?.total_unique_categories ?? 0}
-          </strong>
+          <strong>{categoriesSummary?.total_unique_categories ?? 0}</strong>
           <span>Career areas documented</span>
         </article>
       </section>
 
-      <section
-        className="impact-section"
-        id="impact-receipts"
-      >
+      <section className="impact-section" id="impact-receipts">
         <div className="impact-section-header">
           <div>
-            <p className="mini-label">
-              Evidence-Backed Proof
-            </p>
+            <p className="mini-label">Evidence-Backed Proof</p>
             <h2>Impact Receipts</h2>
             <p>
-              Structured proof of what you contributed, what changed,
-              and what evidence supports it.
+              Structured proof of what you contributed, what changed, and what
+              evidence supports it.
             </p>
           </div>
 
           <span className="impact-count">
             {impactReceipts.length}{" "}
-            {impactReceipts.length === 1
-              ? "receipt"
-              : "receipts"}
+            {impactReceipts.length === 1 ? "receipt" : "receipts"}
           </span>
         </div>
 
         {receiptNotice && (
-          <p className="receipt-feedback success">
-            {receiptNotice}
-          </p>
+          <p className="receipt-feedback success">{receiptNotice}</p>
         )}
 
         {receiptError && (
-          <p className="receipt-feedback error">
-            {receiptError}
-          </p>
+          <p className="receipt-feedback error">{receiptError}</p>
         )}
 
         {impactReceipts.length === 0 ? (
           <div className="impact-empty-state">
             <h3>No Impact Receipts yet.</h3>
-            <p>
-              Use the Create Impact Receipt button on a meaningful
-              entry below.
-            </p>
+            <p>Use the Create Impact Receipt button on a meaningful entry below.</p>
           </div>
         ) : (
           <div className="impact-receipt-grid">
             {impactReceipts.map((receipt) => (
-              <article
-                className="impact-receipt-card compact"
-                key={receipt.id}
-              >
+              <article className="impact-receipt-card compact" key={receipt.id}>
                 <div className="impact-receipt-top">
                   <div>
-                    <p className="mini-label">
-                      Impact Receipt
-                    </p>
+                    <p className="mini-label">Impact Receipt</p>
                     <h3>{receipt.accomplishment}</h3>
                   </div>
 
                   <div className="entry-actions">
                     <span
                       className={`visibility-badge ${
-                        receipt.is_public
-                          ? "public"
-                          : "private"
+                        receipt.is_public ? "public" : "private"
                       }`}
                     >
-                      {receipt.is_public
-                        ? "Public"
-                        : "Private"}
+                      {receipt.is_public ? "Public" : "Private"}
                     </span>
 
                     <button
                       type="button"
                       className="profile-edit-button"
                       disabled={updatingReceiptId === receipt.id}
-                      onClick={() =>
-                        handleToggleReceiptVisibility(receipt)
-                      }
+                      onClick={() => handleToggleReceiptVisibility(receipt)}
                     >
                       {updatingReceiptId === receipt.id
                         ? "Saving..."
@@ -673,16 +647,11 @@ function App() {
                 </div>
 
                 <div className="receipt-summary-row">
-                  <span>
-                    {receipt.evidence?.length ?? 0} evidence
-                  </span>
-                  <span>
-                    {receipt.credit?.length ?? 0} contributors
-                  </span>
+                  <span>{receipt.evidence?.length ?? 0} evidence</span>
+                  <span>{receipt.credit?.length ?? 0} contributors</span>
                   <span>
                     {receipt.confirmations?.filter(
-                      (confirmation) =>
-                        confirmation.status === "confirmed"
+                      (confirmation) => confirmation.status === "confirmed",
                     ).length ?? 0}{" "}
                     confirmed
                   </span>
@@ -690,9 +659,7 @@ function App() {
 
                 <div className="trust-signal-list">
                   {receipt.trust_signals?.map((signal) => (
-                    <span key={signal}>
-                      {formatLabel(signal)}
-                    </span>
+                    <span key={signal}>{formatLabel(signal)}</span>
                   ))}
                 </div>
 
@@ -722,48 +689,36 @@ function App() {
                         <span>Evidence</span>
 
                         <div className="impact-evidence-list">
-                          {receipt.evidence.map(
-                            (evidenceItem, index) => (
-                              <div
-                                className="impact-evidence-item"
-                                key={`${evidenceItem.title}-${index}`}
+                          {receipt.evidence.map((evidenceItem, index) => (
+                            <div
+                              className="impact-evidence-item"
+                              key={`${evidenceItem.title}-${index}`}
+                            >
+                              <strong>{evidenceItem.title}</strong>
+
+                              <small>
+                                {formatLabel(evidenceItem.evidence_type)}
+                              </small>
+
+                              {evidenceItem.reference && (
+                                <p>{evidenceItem.reference}</p>
+                              )}
+
+                              {evidenceItem.description && (
+                                <p>{evidenceItem.description}</p>
+                              )}
+
+                              <span
+                                className={`visibility-badge ${
+                                  evidenceItem.is_public ? "public" : "private"
+                                }`}
                               >
-                                <strong>
-                                  {evidenceItem.title}
-                                </strong>
-
-                                <small>
-                                  {formatLabel(
-                                    evidenceItem.evidence_type
-                                  )}
-                                </small>
-
-                                {evidenceItem.reference && (
-                                  <p>
-                                    {evidenceItem.reference}
-                                  </p>
-                                )}
-
-                                {evidenceItem.description && (
-                                  <p>
-                                    {evidenceItem.description}
-                                  </p>
-                                )}
-
-                                <span
-                                  className={`visibility-badge ${
-                                    evidenceItem.is_public
-                                      ? "public"
-                                      : "private"
-                                  }`}
-                                >
-                                  {evidenceItem.is_public
-                                    ? "Public evidence"
-                                    : "Private evidence"}
-                                </span>
-                              </div>
-                            )
-                          )}
+                                {evidenceItem.is_public
+                                  ? "Public evidence"
+                                  : "Private evidence"}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -773,19 +728,13 @@ function App() {
                         <span>Shared credit</span>
 
                         <div className="impact-credit-list">
-                          {receipt.credit.map(
-                            (creditItem, index) => (
-                              <p
-                                key={`${creditItem.name}-${index}`}
-                              >
-                                <strong>
-                                  {creditItem.name}
-                                </strong>
-                                {" — "}
-                                {creditItem.contribution}
-                              </p>
-                            )
-                          )}
+                          {receipt.credit.map((creditItem, index) => (
+                            <p key={`${creditItem.name}-${index}`}>
+                              <strong>{creditItem.name}</strong>
+                              {" — "}
+                              {creditItem.contribution}
+                            </p>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -839,109 +788,124 @@ function App() {
             <div className="empty-state">
               <h3>No entries loaded yet.</h3>
               <p>
-                Add a brag entry to begin building your
-                evidence-backed career record.
+                Add a brag entry to begin building your evidence-backed career
+                record.
               </p>
             </div>
           ) : (
-            <div className="entry-list">
-              {entries.map((entry) => {
-                const hasReceipt = receiptSourceEntryIds.has(
-                  entry.id
-                );
-                const isCreatingReceipt =
-                  creatingReceiptEntryId === entry.id;
+            <>
+              <div className="entry-list">
+                {entries.map((entry) => {
+                  const hasReceipt = receiptSourceEntryIds.has(entry.id);
+                  const isCreatingReceipt = creatingReceiptEntryId === entry.id;
 
-                return (
-                  <article
-                    className="entry-card"
-                    key={entry.id}
-                  >
-                  <div className="entry-top">
-                    <div>
-                      <p className="mini-label">
-                        {entry.category}
-                        {entry.entry_type
-                          ? ` • ${entry.entry_type}`
-                          : ""}
-                        {entry.entry_date
-                          ? ` • ${entry.entry_date}`
-                          : ""}
-                      </p>
+                  return (
+                    <article className="entry-card" key={entry.id}>
+                      <div className="entry-top">
+                        <div>
+                          <p className="mini-label">
+                            {entry.category}
+                            {entry.entry_type ? ` • ${entry.entry_type}` : ""}
+                            {entry.entry_date ? ` • ${entry.entry_date}` : ""}
+                          </p>
 
-                      <h3>{entry.title}</h3>
-                    </div>
+                          <h3>{entry.title}</h3>
+                        </div>
 
-                    <div className="entry-actions">
-                      <span
-                        className={`visibility-badge ${
-                          entry.is_public
-                            ? "public"
-                            : "private"
-                        }`}
-                      >
-                        {entry.is_public
-                          ? "Public"
-                          : "Private"}
-                      </span>
+                        <div className="entry-actions">
+                          <span
+                            className={`visibility-badge ${
+                              entry.is_public ? "public" : "private"
+                            }`}
+                          >
+                            {entry.is_public ? "Public" : "Private"}
+                          </span>
 
-                      <button
-                        type="button"
-                        className="icon-action"
-                        onClick={() =>
-                          openEditModal(entry)
-                        }
-                        aria-label="Edit entry"
-                        title="Edit entry"
-                      >
-                        <Pencil
-                          size={17}
-                          strokeWidth={2.4}
-                        />
-                      </button>
+                          <button
+                            type="button"
+                            className="icon-action"
+                            onClick={() => openEditModal(entry)}
+                            aria-label="Edit entry"
+                            title="Edit entry"
+                          >
+                            <Pencil size={17} strokeWidth={2.4} />
+                          </button>
 
-                      <button
-                        type="button"
-                        className="icon-action danger"
-                        onClick={() =>
-                          handleDeleteEntry(entry.id)
-                        }
-                        aria-label="Delete entry"
-                        title="Delete entry"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
+                          <button
+                            type="button"
+                            className="icon-action danger"
+                            onClick={() => handleDeleteEntry(entry.id)}
+                            aria-label="Delete entry"
+                            title="Delete entry"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
 
-                  <p>{entry.resume_bullet}</p>
+                      <p>{entry.resume_bullet}</p>
 
-                  <div className="tags">
-                    {entry.tags?.map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
-                  </div>
+                      <div className="tags">
+                        {entry.tags?.map((tag) => (
+                          <span key={tag}>{tag}</span>
+                        ))}
+                      </div>
 
-                  <div className="entry-receipt-action">
-                    <button
-                      type="button"
-                      className="btn secondary receipt-button"
-                      disabled={hasReceipt || isCreatingReceipt}
-                      onClick={() =>
-                        handleCreateImpactReceipt(entry.id)
-                      }
+                      <div className="entry-receipt-action">
+                        <button
+                          type="button"
+                          className="btn secondary receipt-button"
+                          disabled={hasReceipt || isCreatingReceipt}
+                          onClick={() => handleCreateImpactReceipt(entry.id)}
+                        >
+                          {isCreatingReceipt
+                            ? "Creating receipt..."
+                            : hasReceipt
+                              ? "Impact Receipt created"
+                              : "Create Impact Receipt"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="pagination-shell">
+                <span className="pagination-summary">
+                  Showing {dashboardStart}–{dashboardEnd} of{" "}
+                  {entriesMeta.total_entries} accomplishments · Page{" "}
+                  {dashboardPage} of {totalDashboardPages}
+                </span>
+                <div className="pagination-controls">
+                  {dashboardPage > 1 ? (
+                    <a href={`/app?page=${dashboardPage - 1}#entries`}>
+                      Previous
+                    </a>
+                  ) : (
+                    <span className="disabled">Previous</span>
+                  )}
+
+                  {Array.from(
+                    { length: totalDashboardPages },
+                    (_, index) => index + 1,
+                  ).map((pageNumber) => (
+                    <a
+                      className={pageNumber === dashboardPage ? "active" : ""}
+                      href={`/app?page=${pageNumber}#entries`}
+                      key={pageNumber}
                     >
-                      {isCreatingReceipt
-                        ? "Creating receipt..."
-                        : hasReceipt
-                          ? "Impact Receipt created"
-                          : "Create Impact Receipt"}
-                    </button>
-                  </div>
-                </article>
-                );
-              })}
-            </div>
+                      {pageNumber}
+                    </a>
+                  ))}
+
+                  {dashboardPage < totalDashboardPages ? (
+                    <a href={`/app?page=${dashboardPage + 1}#entries`}>Next</a>
+                  ) : (
+                    <span className="disabled">Next</span>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </article>
 
@@ -951,10 +915,7 @@ function App() {
 
           {topTags.length === 0 ? (
             <div className="empty-state small">
-              <p>
-                Your top skills will show here after entries
-                load.
-              </p>
+              <p>Your top skills will show here after entries load.</p>
             </div>
           ) : (
             <div className="skill-list">
@@ -970,20 +931,15 @@ function App() {
       </section>
 
       {isProfileModalOpen && (
-        <div
-          className="modal-backdrop"
-          onClick={closeProfileModal}
-        >
+        <div className="modal-backdrop" onClick={closeProfileModal}>
           <div
             className="modal-card profile-modal-card"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="modal-header">
               <div>
-                <p className="mini-label">
-                  Profile Settings
-                </p>
-                <h2>Edit your public profile</h2>
+                <p className="mini-label">Profile Settings</p>
+                <h2>Edit your Proof Profile</h2>
               </div>
 
               <button
@@ -996,10 +952,7 @@ function App() {
               </button>
             </div>
 
-            <form
-              className="entry-form"
-              onSubmit={handleProfileSubmit}
-            >
+            <form className="entry-form" onSubmit={handleProfileSubmit}>
               <label>
                 Display name
                 <input
@@ -1079,9 +1032,7 @@ function App() {
               </label>
 
               {profileError && (
-                <p className="profile-form-error">
-                  {profileError}
-                </p>
+                <p className="profile-form-error">{profileError}</p>
               )}
 
               <div className="modal-footer">
@@ -1098,9 +1049,7 @@ function App() {
                   className="btn primary form-button"
                   disabled={isSavingProfile}
                 >
-                  {isSavingProfile
-                    ? "Saving..."
-                    : "Save profile"}
+                  {isSavingProfile ? "Saving..." : "Save profile"}
                 </button>
               </div>
             </form>
@@ -1109,10 +1058,7 @@ function App() {
       )}
 
       {isModalOpen && (
-        <div
-          className="modal-backdrop"
-          onClick={closeModal}
-        >
+        <div className="modal-backdrop" onClick={closeModal}>
           <div
             className="modal-card"
             onClick={(event) => event.stopPropagation()}
@@ -1120,15 +1066,11 @@ function App() {
             <div className="modal-header">
               <div>
                 <p className="mini-label">
-                  {editingEntryId
-                    ? "Edit Proof"
-                    : "Create Proof"}
+                  {editingEntryId ? "Edit Proof" : "Create Proof"}
                 </p>
 
                 <h2>
-                  {editingEntryId
-                    ? "Update brag entry"
-                    : "Add a new brag entry"}
+                  {editingEntryId ? "Update brag entry" : "Add a new brag entry"}
                 </h2>
               </div>
 
@@ -1142,10 +1084,7 @@ function App() {
               </button>
             </div>
 
-            <form
-              className="entry-form"
-              onSubmit={handleCreateEntry}
-            >
+            <form className="entry-form" onSubmit={handleCreateEntry}>
               <div className="form-row">
                 <label>
                   Title
@@ -1253,9 +1192,7 @@ function App() {
               </label>
 
               <label className="visibility-toggle">
-                <span>
-                  Show this entry on my public BragStack
-                </span>
+                <span>Show this entry on my Proof Profile</span>
 
                 <input
                   type="checkbox"
