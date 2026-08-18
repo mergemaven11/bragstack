@@ -108,8 +108,10 @@ export async function deleteEntry(entryId) {
   return response.data;
 }
 
-export async function getPublicEntries(slug) {
-  const response = await api.get(getPublicBragPath(slug));
+export async function getPublicEntries(slug, limit = 6, skip = 0) {
+  const response = await api.get(getPublicBragPath(slug), {
+    params: { limit, skip },
+  });
   return response.data;
 }
 
