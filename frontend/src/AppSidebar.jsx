@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  BarChart3,
   FileText,
   Home,
   ListChecks,
   LogOut,
   ReceiptText,
-  Settings,
   UserRound,
 } from "lucide-react";
 
@@ -88,11 +86,6 @@ function AppSidebar() {
             <span>Public Profile</span>
           </a>
         )}
-
-        <a href="/app#profile-settings">
-          <Settings size={18} />
-          <span>Settings</span>
-        </a>
       </nav>
 
       <div className="sidebar-footer">
