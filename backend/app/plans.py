@@ -7,6 +7,17 @@ from fastapi import HTTPException, status
 FREE_ENTRY_LIMIT = 5
 FREE_IMPACT_RECEIPT_LIMIT = 1
 
+PLAN_PRICING: dict[str, dict[str, Any]] = {
+    "free": {"monthly": 0, "label": "Free"},
+    "pro": {"monthly": 9, "label": "Pro"},
+    "team": {
+        "monthly_per_user": 15,
+        "minimum_seats": 3,
+        "label": "Team",
+    },
+    "enterprise": {"monthly": None, "label": "Enterprise"},
+}
+
 PLAN_FEATURES: dict[str, dict[str, Any]] = {
     "free": {
         "max_entries": FREE_ENTRY_LIMIT,
@@ -17,6 +28,13 @@ PLAN_FEATURES: dict[str, dict[str, Any]] = {
         "integrations": False,
         "advanced_public_analytics": False,
         "export_pdf": False,
+        "team_review_packets": False,
+        "shared_templates": False,
+        "manager_verification": False,
+        "org_analytics": False,
+        "sso": False,
+        "audit_logs": False,
+        "retention_controls": False,
     },
     "pro": {
         "max_entries": None,
@@ -27,6 +45,47 @@ PLAN_FEATURES: dict[str, dict[str, Any]] = {
         "integrations": True,
         "advanced_public_analytics": True,
         "export_pdf": True,
+        "team_review_packets": False,
+        "shared_templates": False,
+        "manager_verification": False,
+        "org_analytics": False,
+        "sso": False,
+        "audit_logs": False,
+        "retention_controls": False,
+    },
+    "team": {
+        "max_entries": None,
+        "max_impact_receipts": None,
+        "advanced_reports": True,
+        "performance_review_builder": True,
+        "promotion_packet": True,
+        "integrations": True,
+        "advanced_public_analytics": True,
+        "export_pdf": True,
+        "team_review_packets": True,
+        "shared_templates": True,
+        "manager_verification": True,
+        "org_analytics": True,
+        "sso": False,
+        "audit_logs": False,
+        "retention_controls": False,
+    },
+    "enterprise": {
+        "max_entries": None,
+        "max_impact_receipts": None,
+        "advanced_reports": True,
+        "performance_review_builder": True,
+        "promotion_packet": True,
+        "integrations": True,
+        "advanced_public_analytics": True,
+        "export_pdf": True,
+        "team_review_packets": True,
+        "shared_templates": True,
+        "manager_verification": True,
+        "org_analytics": True,
+        "sso": True,
+        "audit_logs": True,
+        "retention_controls": True,
     },
 }
 
@@ -47,6 +106,11 @@ def get_entitlements_for_user(user: dict) -> dict[str, Any]:
     return dict(PLAN_FEATURES[get_plan_for_user(user)])
 
 
+def get_pricing_for_user(user: dict) -> dict[str, Any]:
+    """Return display pricing metadata for the user's current plan."""
+    return dict(PLAN_PRICING[get_plan_for_user(user)])
+
+
 def require_feature(user: dict, feature_name: str) -> None:
     """Raise 403 when a user's plan does not include a feature."""
     entitlements = get_entitlements_for_user(user)
@@ -56,8 +120,8 @@ def require_feature(user: dict, feature_name: str) -> None:
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail={
-            "code": "pro_feature_required",
-            "message": "This feature requires BragStack Pro.",
+            "code": "paid_feature_required",
+            "message": "This feature is not included in your BragStack plan.",
             "feature": feature_name,
             "plan": get_plan_for_user(user),
         },
@@ -84,7 +148,7 @@ def enforce_usage_limit(
             "code": "plan_limit_reached",
             "message": (
                 f"Your {get_plan_for_user(user).title()} plan includes "
-                f"{limit} {resource_name}. Upgrade to BragStack Pro for unlimited access."
+                f"{limit} {resource_name}. Upgrade for unlimited access."
             ),
             "resource": resource_name,
             "limit": limit,
