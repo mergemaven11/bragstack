@@ -71,8 +71,10 @@ export async function getPublicProfile(slug) {
   return response.data;
 }
 
-export async function getEntries() {
-  const response = await api.get("/entries?limit=10&skip=0");
+export async function getEntries(limit = 10, skip = 0) {
+  const response = await api.get("/entries", {
+    params: { limit, skip },
+  });
   return response.data;
 }
 
