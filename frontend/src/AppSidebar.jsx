@@ -14,7 +14,7 @@ import "./AppShell.css";
 const NAV_ITEMS = [
   { href: "/app", label: "Overview", icon: Home },
   { href: "/app/accomplishments", label: "Accomplishments", icon: ListChecks },
-  { href: "/app#impact-receipts", label: "Impact Receipts", icon: ReceiptText },
+  { href: "/app/impact-receipts", label: "Impact Receipts", icon: ReceiptText },
   { href: "/app/reports", label: "Reports", icon: FileText },
 ];
 
@@ -67,10 +67,7 @@ function AppSidebar() {
 
       <nav className="sidebar-nav" aria-label="BragStack navigation">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const hrefPath = href.split("#")[0];
-          const isActive = hrefPath === "/app"
-            ? path === "/app" && !href.includes("#")
-            : path === hrefPath;
+          const isActive = path === href;
 
           return (
             <a className={isActive ? "active" : ""} href={href} key={href}>
@@ -83,7 +80,7 @@ function AppSidebar() {
         {user?.public_slug && (
           <a href={`/brag/${user.public_slug}`} target="_blank" rel="noreferrer">
             <UserRound size={18} />
-            <span>Public Profile</span>
+            <span>Proof Profile</span>
           </a>
         )}
       </nav>
