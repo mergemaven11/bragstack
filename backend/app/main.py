@@ -5,6 +5,7 @@ from app.auth_routes import router as auth_router
 from app.impact_receipt_routes import router as impact_receipts_router
 from app.performance_packet_export_routes import router as performance_packet_export_router
 from app.performance_packet_routes import router as performance_packet_router
+from app.promotion_packet_export_routes import router as promotion_packet_export_router
 from app.promotion_packet_routes import router as promotion_packet_router
 from app.public_slug_routes import router as public_slug_router
 from app.reports_routes import router as reports_router
@@ -38,6 +39,7 @@ app.include_router(reports_router)
 app.include_router(performance_packet_router)
 app.include_router(performance_packet_export_router)
 app.include_router(promotion_packet_router)
+app.include_router(promotion_packet_export_router)
 
 
 @app.get("/")
