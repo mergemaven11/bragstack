@@ -206,3 +206,102 @@ def test_custom_report_validates_dates_and_filters_period(report_context):
         "/reports/custom?start_date=2026-08-01&end_date=2026-07-01"
     )
     assert invalid.status_code == 422
+
+
+def test_performance_packet_requires_pro_entitlement(report_context):
+    user, _, _ = report_context
+    user["plan"] = "free"
+
+    response = client.get("/reports/performance-packet")
+
+    assert response.status_code == 403
+    detail = response.json()["detail"]
+    assert detail["code"] == "paid_feature_required"
+    assert detail["feature"] == "performance_review_builder"
+
+
+def test_performance_packet_builds_transparent_scorecard(report_context):
+    user, entries, receipts = report_context
+    user["plan"] = "pro"
+    user["headline"] = "Community Programs Coordinator"
+
+    first = entries.insert_one(
+        {
+            "user_id": str(user["_id"]),
+            "title": "Expanded workshop access",
+            "category": "Community Impact",
+            "entry_type": "Current Job",
+            "entry_date": "2026-07-10",
+            "tags": ["Facilitation", "Program Planning"],
+            "impact": "Increased monthly attendance by 40%.",
+            "resume_bullet": "Expanded access to recurring community workshops.",
+        }
+    )
+    second = entries.insert_one(
+        {
+            "user_id": str(user["_id"]),
+            "title": "Improved volunteer onboarding",
+            "category": "Operations",
+            "entry_type": "Current Job",
+            "entry_date": "2026-07-18",
+            "tags": ["Training"],
+            "impact": "Standardized onboarding materials.",
+            "resume_bullet": "Standardized volunteer onboarding.",
+        }
+    )
+
+    receipts.insert_one(
+        {
+            "user_id": str(user["_id"]),
+            "source_entry_id": str(first.inserted_id),
+            "accomplishment": "Expanded workshop access",
+            "contribution": "Redesigned scheduling and outreach.",
+            "result": "Increased monthly attendance by 40%.",
+            "evidence": [
+                {"title": "Attendance report", "is_public": False},
+                {"title": "Program calendar", "is_public": False},
+            ],
+            "skills": ["Facilitation", "Program Planning"],
+            "confirmations": [
+                {
+                    "name": "Program Director",
+                    "confirmation_type": "supervisor",
+                    "status": "confirmed",
+                }
+            ],
+            "trust_signals": ["supervisor-verified"],
+        }
+    )
+    receipts.insert_one(
+        {
+            "user_id": str(user["_id"]),
+            "source_entry_id": str(second.inserted_id),
+            "accomplishment": "Improved volunteer onboarding",
+            "contribution": "Created a repeatable onboarding guide.",
+            "result": "Standardized onboarding materials.",
+            "evidence": [],
+            "skills": ["Training"],
+            "confirmations": [],
+            "trust_signals": [],
+        }
+    )
+
+    response = client.get(
+        "/reports/performance-packet?start_date=2026-07-01&end_date=2026-07-31"
+    )
+
+    assert response.status_code == 200
+    packet = response.json()["packet"]
+    scorecard = packet["scorecard"]
+
+    assert packet["subject"]["role"] == "Community Programs Coordinator"
+    assert packet["period"]["start_date"] == "2026-07-01"
+    assert scorecard["accomplishments"] == 2
+    assert scorecard["impact_receipts"] == 2
+    assert scorecard["evidence_items"] == 2
+    assert scorecard["receipt_coverage_percent"] == 100
+    assert scorecard["quantified_result_coverage_percent"] == 50
+    assert scorecard["verification_coverage_percent"] == 50
+    assert scorecard["evidence_coverage_percent"] == 50
+    assert scorecard["evidence_depth"] == 1.0
+    assert packet["signature_accomplishments"][0]["title"] == "Expanded workshop access"
