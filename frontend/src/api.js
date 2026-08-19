@@ -165,16 +165,21 @@ export async function getCustomCareerReport(startDate, endDate) {
   return response.data;
 }
 
-export async function getPerformancePacket(startDate, endDate) {
-  const params =
-    startDate && endDate
+export async function getPerformancePacket(startDate, endDate, options = {}) {
+  const params = {
+    ...(startDate && endDate
       ? {
           start_date: startDate,
           end_date: endDate,
         }
-      : undefined;
+      : {}),
+    ...(options.careerArea ? { career_area: options.careerArea } : {}),
+    ...(options.roleTitle ? { role_title: options.roleTitle } : {}),
+    ...(options.organization ? { organization: options.organization } : {}),
+    confidential: options.confidential !== false,
+  };
 
-  const response = await api.get("/reports/performance-packet", { params });
+  const response = await api.get("/packets/performance-review", { params });
   return response.data;
 }
 
