@@ -12,9 +12,11 @@ import {
 } from "lucide-react";
 
 import {
+  downloadInterviewPacketPdf,
   downloadPerformancePacketPdf,
   downloadPromotionPacketPdf,
 } from "./api";
+import InterviewPacketPages from "./InterviewPacketPages";
 import PerformancePacketPages from "./PerformancePacketPages";
 import PromotionPacketPages from "./PromotionPacketPages";
 import "./PerformancePacketPreview.css";
@@ -111,17 +113,22 @@ function PerformancePacketPreview({ packet, onBack }) {
   const topSignature = packet?.signature_accomplishments?.[0];
   const generatedDate = formatDate(packet?.generated_at);
   const isPromotion = packet?.kind === "promotion";
+  const isInterview = packet?.kind === "interview";
   const packetTitle = packet?.title || "Performance Review Packet";
-  const targetText = [target.role, target.level].filter(Boolean).join(" · ");
+  const targetText = isInterview
+    ? [target.role, target.organization].filter(Boolean).join(" · ")
+    : [target.role, target.level].filter(Boolean).join(" · ");
 
   async function handleDownloadPdf() {
     setIsDownloading(true);
     setDownloadError("");
 
     try {
-      const downloader = isPromotion
-        ? downloadPromotionPacketPdf
-        : downloadPerformancePacketPdf;
+      const downloader = isInterview
+        ? downloadInterviewPacketPdf
+        : isPromotion
+          ? downloadPromotionPacketPdf
+          : downloadPerformancePacketPdf;
       const { blob, filename } = await downloader(packet);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -147,6 +154,22 @@ function PerformancePacketPreview({ packet, onBack }) {
       setIsDownloading(false);
     }
   }
+
+  const scorecardLabel = isPromotion
+    ? "Promotion Evidence Scorecard"
+    : isInterview
+      ? "Interview Story Scorecard"
+      : "Executive Scorecard";
+  const scorecardTitle = isPromotion
+    ? "The proof behind the case"
+    : isInterview
+      ? "The stories you chose"
+      : "Proof at a glance";
+  const scorecardIntro = isPromotion
+    ? "A transparent view of the documentation supporting this progression conversation. These measures describe the evidence record; they do not calculate promotion readiness."
+    : isInterview
+      ? "A transparent view of the accomplishments selected for interview preparation. Coverage measures describe documented story quality; missing details become prep prompts instead of invented answers."
+      : "A transparent summary of documented work for this review period. Coverage measures are calculated from actual accomplishments, Impact Receipts, evidence, and confirmations—not an opaque AI score.";
 
   return (
     <main className="packet-preview-shell">
@@ -212,9 +235,9 @@ function PerformancePacketPreview({ packet, onBack }) {
 
             <div className="packet-cover-rule" />
 
-            {isPromotion && targetText && (
+            {(isPromotion || isInterview) && targetText && (
               <div className="packet-period-block">
-                <span>Progression target</span>
+                <span>{isInterview ? "Interview target" : "Progression target"}</span>
                 <strong>{targetText}</strong>
               </div>
             )}
@@ -227,7 +250,7 @@ function PerformancePacketPreview({ packet, onBack }) {
             <div className="packet-cover-stats">
               <div>
                 <strong>{scorecard.accomplishments ?? 0}</strong>
-                <span>Documented accomplishments</span>
+                <span>{isInterview ? "Selected stories" : "Documented accomplishments"}</span>
               </div>
               <div>
                 <strong>{scorecard.impact_receipts ?? 0}</strong>
@@ -256,26 +279,22 @@ function PerformancePacketPreview({ packet, onBack }) {
 
         <section
           className="packet-sheet packet-scorecard-page"
-          aria-label={isPromotion ? "Promotion evidence scorecard" : "Executive scorecard"}
+          aria-label={scorecardLabel}
         >
           <header className="packet-page-header">
             <div>
-              <p>01 · {isPromotion ? "Promotion Evidence Scorecard" : "Executive Scorecard"}</p>
-              <h2>{isPromotion ? "The proof behind the case" : "Proof at a glance"}</h2>
+              <p>01 · {scorecardLabel}</p>
+              <h2>{scorecardTitle}</h2>
             </div>
             <div className="packet-page-header-mark">BRAGSTACK</div>
           </header>
 
-          <p className="packet-scorecard-intro">
-            {isPromotion
-              ? "A transparent view of the documentation supporting this progression conversation. These measures describe the evidence record; they do not calculate promotion readiness."
-              : "A transparent summary of documented work for this review period. Coverage measures are calculated from actual accomplishments, Impact Receipts, evidence, and confirmations—not an opaque AI score."}
-          </p>
+          <p className="packet-scorecard-intro">{scorecardIntro}</p>
 
           <section className="packet-stat-grid" aria-label="Packet totals">
             <article>
               <FileText size={19} />
-              <span>Accomplishments</span>
+              <span>{isInterview ? "Selected Stories" : "Accomplishments"}</span>
               <strong>{scorecard.accomplishments ?? 0}</strong>
             </article>
             <article>
@@ -299,7 +318,7 @@ function PerformancePacketPreview({ packet, onBack }) {
             <div className="packet-section-heading">
               <div>
                 <p className="packet-section-kicker">Evidence health</p>
-                <h3>Documentation coverage</h3>
+                <h3>{isInterview ? "Story coverage" : "Documentation coverage"}</h3>
               </div>
               <BarChart3 size={20} />
             </div>
@@ -308,22 +327,22 @@ function PerformancePacketPreview({ packet, onBack }) {
               <CoverageRow
                 label="Impact Receipt coverage"
                 value={scorecard.receipt_coverage_percent}
-                note="Accomplishments converted into structured proof"
+                note={isInterview ? "Selected stories with structured proof" : "Accomplishments converted into structured proof"}
               />
               <CoverageRow
                 label="Quantified result coverage"
                 value={scorecard.quantified_result_coverage_percent}
-                note="Receipts containing a measurable result"
+                note={isInterview ? "Selected stories containing a measurable result" : "Receipts containing a measurable result"}
               />
               <CoverageRow
                 label="Evidence coverage"
                 value={scorecard.evidence_coverage_percent}
-                note="Receipts supported by at least one evidence item"
+                note={isInterview ? "Selected stories supported by evidence" : "Receipts supported by at least one evidence item"}
               />
               <CoverageRow
                 label="Verification coverage"
                 value={scorecard.verification_coverage_percent}
-                note="Receipts with a confirmed contribution"
+                note={isInterview ? "Selected stories with a confirmed contribution" : "Receipts with a confirmed contribution"}
               />
             </div>
 
@@ -340,7 +359,7 @@ function PerformancePacketPreview({ packet, onBack }) {
               items={packet?.impact_analytics?.top_skills}
             />
             <RankedList
-              title="Work themes"
+              title={isInterview ? "Selected story themes" : "Work themes"}
               items={packet?.impact_analytics?.categories}
             />
           </section>
@@ -351,7 +370,11 @@ function PerformancePacketPreview({ packet, onBack }) {
             </div>
             <div>
               <p className="packet-section-kicker">
-                {isPromotion ? "Promotion evidence highlight" : "Signature accomplishment"}
+                {isPromotion
+                  ? "Promotion evidence highlight"
+                  : isInterview
+                    ? "Interview story highlight"
+                    : "Signature accomplishment"}
               </p>
               {topSignature ? (
                 <>
@@ -375,6 +398,8 @@ function PerformancePacketPreview({ packet, onBack }) {
 
         {isPromotion ? (
           <PromotionPacketPages packet={packet} />
+        ) : isInterview ? (
+          <InterviewPacketPages packet={packet} />
         ) : (
           <PerformancePacketPages packet={packet} />
         )}
