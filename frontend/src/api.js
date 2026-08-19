@@ -216,7 +216,11 @@ export async function getCustomCareerReport(startDate, endDate) {
 }
 
 export async function getPerformancePacket(startDate, endDate, options = {}) {
-  const response = await api.get("/packets/performance-review", {
+  const path =
+    options.packetType === "promotion"
+      ? "/packets/promotion"
+      : "/packets/performance-review";
+  const response = await api.get(path, {
     params: getPacketParams(startDate, endDate, options),
   });
   return response.data;
