@@ -1,7 +1,9 @@
+import { useState } from "react";
 import {
   ArrowLeft,
   Award,
   BarChart3,
+  Download,
   FileText,
   Layers3,
   Printer,
@@ -9,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { downloadPerformancePacketPdf } from "./api";
 import PerformancePacketPages from "./PerformancePacketPages";
 import "./PerformancePacketPreview.css";
 
@@ -94,11 +97,44 @@ function PacketFooter({ page }) {
 }
 
 function PerformancePacketPreview({ packet, onBack }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
   const scorecard = packet?.scorecard ?? {};
   const subject = packet?.subject ?? {};
   const context = packet?.context ?? {};
   const topSignature = packet?.signature_accomplishments?.[0];
   const generatedDate = formatDate(packet?.generated_at);
+
+  async function handleDownloadPdf() {
+    setIsDownloading(true);
+    setDownloadError("");
+
+    try {
+      const { blob, filename } = await downloadPerformancePacketPdf(packet);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("bragstack_token");
+        window.location.href = "/login";
+        return;
+      }
+      setDownloadError(
+        error.response?.status === 403
+          ? "PDF export is included with BragStack Pro and higher plans."
+          : "The PDF could not be generated. Try again or use Print as a fallback."
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  }
 
   return (
     <main className="packet-preview-shell">
@@ -113,11 +149,28 @@ function PerformancePacketPreview({ packet, onBack }) {
           <strong>Physical dossier preview</strong>
         </div>
 
-        <button type="button" onClick={() => window.print()}>
-          <Printer size={17} />
-          Print / Save PDF
-        </button>
+        <span className="packet-preview-toolbar-actions">
+          <button type="button" onClick={() => window.print()}>
+            <Printer size={17} />
+            Print
+          </button>
+          <button
+            type="button"
+            className="packet-download-button"
+            onClick={() => void handleDownloadPdf()}
+            disabled={isDownloading}
+          >
+            <Download size={17} />
+            {isDownloading ? "Building PDF..." : "Download PDF"}
+          </button>
+        </span>
       </header>
+
+      {downloadError && (
+        <p className="packet-preview-download-error" role="alert">
+          {downloadError}
+        </p>
+      )}
 
       <div className="packet-paper-stack">
         <section className="packet-sheet packet-cover" aria-label="Packet cover">
