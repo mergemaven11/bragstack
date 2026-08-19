@@ -11,8 +11,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { downloadPerformancePacketPdf } from "./api";
+import {
+  downloadPerformancePacketPdf,
+  downloadPromotionPacketPdf,
+} from "./api";
 import PerformancePacketPages from "./PerformancePacketPages";
+import PromotionPacketPages from "./PromotionPacketPages";
 import "./PerformancePacketPreview.css";
 import "./PerformancePacketExport.css";
 
@@ -103,15 +107,22 @@ function PerformancePacketPreview({ packet, onBack }) {
   const scorecard = packet?.scorecard ?? {};
   const subject = packet?.subject ?? {};
   const context = packet?.context ?? {};
+  const target = packet?.target ?? {};
   const topSignature = packet?.signature_accomplishments?.[0];
   const generatedDate = formatDate(packet?.generated_at);
+  const isPromotion = packet?.kind === "promotion";
+  const packetTitle = packet?.title || "Performance Review Packet";
+  const targetText = [target.role, target.level].filter(Boolean).join(" · ");
 
   async function handleDownloadPdf() {
     setIsDownloading(true);
     setDownloadError("");
 
     try {
-      const { blob, filename } = await downloadPerformancePacketPdf(packet);
+      const downloader = isPromotion
+        ? downloadPromotionPacketPdf
+        : downloadPerformancePacketPdf;
+      const { blob, filename } = await downloader(packet);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -146,7 +157,7 @@ function PerformancePacketPreview({ packet, onBack }) {
         </button>
 
         <div>
-          <span>Performance Packet</span>
+          <span>{packetTitle}</span>
           <strong>Physical dossier preview</strong>
         </div>
 
@@ -188,7 +199,7 @@ function PerformancePacketPreview({ packet, onBack }) {
           </div>
 
           <div className="packet-cover-main">
-            <p className="packet-document-type">Performance Review Packet</p>
+            <p className="packet-document-type">{packetTitle}</p>
             <h1>{subject.name || "BragStack Member"}</h1>
             <h2>{subject.role || "Professional"}</h2>
             {context.organization && (
@@ -200,6 +211,13 @@ function PerformancePacketPreview({ packet, onBack }) {
             {subject.location && <p className="packet-location">{subject.location}</p>}
 
             <div className="packet-cover-rule" />
+
+            {isPromotion && targetText && (
+              <div className="packet-period-block">
+                <span>Progression target</span>
+                <strong>{targetText}</strong>
+              </div>
+            )}
 
             <div className="packet-period-block">
               <span>Review period</span>
@@ -238,20 +256,20 @@ function PerformancePacketPreview({ packet, onBack }) {
 
         <section
           className="packet-sheet packet-scorecard-page"
-          aria-label="Executive scorecard"
+          aria-label={isPromotion ? "Promotion evidence scorecard" : "Executive scorecard"}
         >
           <header className="packet-page-header">
             <div>
-              <p>01 · Executive Scorecard</p>
-              <h2>Proof at a glance</h2>
+              <p>01 · {isPromotion ? "Promotion Evidence Scorecard" : "Executive Scorecard"}</p>
+              <h2>{isPromotion ? "The proof behind the case" : "Proof at a glance"}</h2>
             </div>
             <div className="packet-page-header-mark">BRAGSTACK</div>
           </header>
 
           <p className="packet-scorecard-intro">
-            A transparent summary of documented work for this review period.
-            Coverage measures are calculated from actual accomplishments, Impact
-            Receipts, evidence, and confirmations—not an opaque AI score.
+            {isPromotion
+              ? "A transparent view of the documentation supporting this progression conversation. These measures describe the evidence record; they do not calculate promotion readiness."
+              : "A transparent summary of documented work for this review period. Coverage measures are calculated from actual accomplishments, Impact Receipts, evidence, and confirmations—not an opaque AI score."}
           </p>
 
           <section className="packet-stat-grid" aria-label="Packet totals">
@@ -332,7 +350,9 @@ function PerformancePacketPreview({ packet, onBack }) {
               <Award size={21} />
             </div>
             <div>
-              <p className="packet-section-kicker">Signature accomplishment</p>
+              <p className="packet-section-kicker">
+                {isPromotion ? "Promotion evidence highlight" : "Signature accomplishment"}
+              </p>
               {topSignature ? (
                 <>
                   <h3>{topSignature.title}</h3>
@@ -353,7 +373,11 @@ function PerformancePacketPreview({ packet, onBack }) {
           <PacketFooter page={2} />
         </section>
 
-        <PerformancePacketPages packet={packet} />
+        {isPromotion ? (
+          <PromotionPacketPages packet={packet} />
+        ) : (
+          <PerformancePacketPages packet={packet} />
+        )}
       </div>
     </main>
   );
