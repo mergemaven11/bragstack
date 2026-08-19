@@ -33,7 +33,11 @@ function ImpactReceiptsPage() {
   }
 
   useEffect(() => {
-    void loadReceipts();
+    const timeoutId = window.setTimeout(() => {
+      void loadReceipts();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   const stats = useMemo(() => {
