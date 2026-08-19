@@ -39,6 +39,15 @@ function getPacketParams(startDate, endDate, options = {}) {
     ...(options.organization ? { organization: options.organization } : {}),
     ...(options.targetRole ? { target_role: options.targetRole } : {}),
     ...(options.targetLevel ? { target_level: options.targetLevel } : {}),
+    ...(options.targetOrganization
+      ? { target_organization: options.targetOrganization }
+      : {}),
+    ...(options.selectedEntryIds?.length
+      ? { selected_entry_ids: options.selectedEntryIds.join(",") }
+      : {}),
+    ...(options.includeEvidenceReferences
+      ? { include_evidence_references: true }
+      : {}),
     confidential: options.confidential !== false,
   };
 }
@@ -53,12 +62,17 @@ async function downloadPacketPdf(path, packet, fallbackFilename) {
   const context = packet?.context ?? {};
   const subject = packet?.subject ?? {};
   const target = packet?.target ?? {};
+  const interviewPreferences = packet?.interview_preferences ?? {};
   const params = getPacketParams(period.start_date, period.end_date, {
     careerArea: context.career_area,
     roleTitle: subject.role,
     organization: context.organization,
     targetRole: target.role,
     targetLevel: target.level,
+    targetOrganization: target.organization,
+    selectedEntryIds: interviewPreferences.selected_entry_ids,
+    includeEvidenceReferences:
+      interviewPreferences.include_evidence_references === true,
     confidential: packet?.confidential !== false,
   });
 
@@ -219,7 +233,9 @@ export async function getPerformancePacket(startDate, endDate, options = {}) {
   const path =
     options.packetType === "promotion"
       ? "/packets/promotion"
-      : "/packets/performance-review";
+      : options.packetType === "interview"
+        ? "/packets/interview"
+        : "/packets/performance-review";
   const response = await api.get(path, {
     params: getPacketParams(startDate, endDate, options),
   });
@@ -228,6 +244,13 @@ export async function getPerformancePacket(startDate, endDate, options = {}) {
 
 export async function getPromotionPacket(startDate, endDate, options = {}) {
   const response = await api.get("/packets/promotion", {
+    params: getPacketParams(startDate, endDate, options),
+  });
+  return response.data;
+}
+
+export async function getInterviewPacket(startDate, endDate, options = {}) {
+  const response = await api.get("/packets/interview", {
     params: getPacketParams(startDate, endDate, options),
   });
   return response.data;
@@ -246,6 +269,14 @@ export async function downloadPromotionPacketPdf(packet) {
     "/packets/promotion.pdf",
     packet,
     "bragstack-promotion-packet.pdf"
+  );
+}
+
+export async function downloadInterviewPacketPdf(packet) {
+  return downloadPacketPdf(
+    "/packets/interview.pdf",
+    packet,
+    "bragstack-interview-packet.pdf"
   );
 }
 
