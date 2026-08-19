@@ -37,6 +37,8 @@ function getPacketParams(startDate, endDate, options = {}) {
     ...(options.careerArea ? { career_area: options.careerArea } : {}),
     ...(options.roleTitle ? { role_title: options.roleTitle } : {}),
     ...(options.organization ? { organization: options.organization } : {}),
+    ...(options.targetRole ? { target_role: options.targetRole } : {}),
+    ...(options.targetLevel ? { target_level: options.targetLevel } : {}),
     confidential: options.confidential !== false,
   };
 }
@@ -44,6 +46,34 @@ function getPacketParams(startDate, endDate, options = {}) {
 function parseDownloadFilename(contentDisposition, fallback) {
   const match = contentDisposition?.match(/filename="?([^";]+)"?/i);
   return match?.[1] || fallback;
+}
+
+async function downloadPacketPdf(path, packet, fallbackFilename) {
+  const period = packet?.period ?? {};
+  const context = packet?.context ?? {};
+  const subject = packet?.subject ?? {};
+  const target = packet?.target ?? {};
+  const params = getPacketParams(period.start_date, period.end_date, {
+    careerArea: context.career_area,
+    roleTitle: subject.role,
+    organization: context.organization,
+    targetRole: target.role,
+    targetLevel: target.level,
+    confidential: packet?.confidential !== false,
+  });
+
+  const response = await api.get(path, {
+    params,
+    responseType: "blob",
+  });
+
+  return {
+    blob: response.data,
+    filename: parseDownloadFilename(
+      response.headers["content-disposition"],
+      fallbackFilename
+    ),
+  };
 }
 
 api.interceptors.request.use((config) => {
@@ -186,35 +216,37 @@ export async function getCustomCareerReport(startDate, endDate) {
 }
 
 export async function getPerformancePacket(startDate, endDate, options = {}) {
-  const response = await api.get("/packets/performance-review", {
+  const path =
+    options.packetType === "promotion"
+      ? "/packets/promotion"
+      : "/packets/performance-review";
+  const response = await api.get(path, {
+    params: getPacketParams(startDate, endDate, options),
+  });
+  return response.data;
+}
+
+export async function getPromotionPacket(startDate, endDate, options = {}) {
+  const response = await api.get("/packets/promotion", {
     params: getPacketParams(startDate, endDate, options),
   });
   return response.data;
 }
 
 export async function downloadPerformancePacketPdf(packet) {
-  const period = packet?.period ?? {};
-  const context = packet?.context ?? {};
-  const subject = packet?.subject ?? {};
-  const params = getPacketParams(period.start_date, period.end_date, {
-    careerArea: context.career_area,
-    roleTitle: subject.role,
-    organization: context.organization,
-    confidential: packet?.confidential !== false,
-  });
+  return downloadPacketPdf(
+    "/packets/performance-review.pdf",
+    packet,
+    "bragstack-performance-review.pdf"
+  );
+}
 
-  const response = await api.get("/packets/performance-review.pdf", {
-    params,
-    responseType: "blob",
-  });
-
-  return {
-    blob: response.data,
-    filename: parseDownloadFilename(
-      response.headers["content-disposition"],
-      "bragstack-performance-review.pdf"
-    ),
-  };
+export async function downloadPromotionPacketPdf(packet) {
+  return downloadPacketPdf(
+    "/packets/promotion.pdf",
+    packet,
+    "bragstack-promotion-packet.pdf"
+  );
 }
 
 export async function getPublicImpactReceipts(slug) {
