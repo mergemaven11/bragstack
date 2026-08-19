@@ -11,9 +11,11 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import PerformancePacketPreview from "./PerformancePacketPreview";
 import {
   getAllTimeCareerReport,
   getCustomCareerReport,
+  getPerformancePacket,
   getWeeklyCareerReport,
 } from "./api";
 import "./ReportsPage.css";
@@ -118,6 +120,10 @@ function ReportsPage() {
   const [endDate, setEndDate] = useState(getToday());
   const [searchQuery, setSearchQuery] = useState("");
   const [copyNotice, setCopyNotice] = useState("");
+  const [packet, setPacket] = useState(null);
+  const [isPacketLoading, setIsPacketLoading] = useState(false);
+  const [packetError, setPacketError] = useState("");
+  const [showPacket, setShowPacket] = useState(false);
 
   async function loadReport(type = activeType) {
     const token = localStorage.getItem("bragstack_token");
@@ -130,6 +136,7 @@ function ReportsPage() {
     setIsLoading(true);
     setError("");
     setCopyNotice("");
+    setPacketError("");
 
     try {
       let data;
@@ -143,6 +150,8 @@ function ReportsPage() {
       }
 
       setReport(data);
+      setPacket(null);
+      setShowPacket(false);
     } catch (requestError) {
       console.error(requestError);
 
@@ -202,6 +211,7 @@ function ReportsPage() {
   function handleTypeChange(type) {
     setActiveType(type);
     setSearchQuery("");
+    setPacketError("");
 
     if (type !== "custom") {
       void loadReport(type);
@@ -212,6 +222,7 @@ function ReportsPage() {
     event.preventDefault();
     setActiveType("custom");
     setSearchQuery("");
+    setPacketError("");
     void loadReport("custom");
   }
 
@@ -240,7 +251,8 @@ function ReportsPage() {
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const periodName = report?.period?.label?.toLowerCase().replace(/\s+/g, "-") || "career";
+    const periodName =
+      report?.period?.label?.toLowerCase().replace(/\s+/g, "-") || "career";
 
     link.href = url;
     link.download = `bragstack-${periodName}-report.md`;
@@ -249,6 +261,57 @@ function ReportsPage() {
     link.remove();
     URL.revokeObjectURL(url);
     setCopyNotice("Markdown report downloaded.");
+  }
+
+  async function handleBuildPacket() {
+    if (!report) {
+      return;
+    }
+
+    setIsPacketLoading(true);
+    setPacketError("");
+
+    try {
+      const period = report.period ?? {};
+      const hasDates = Boolean(period.start_date && period.end_date);
+      const data = await getPerformancePacket(
+        hasDates ? period.start_date : undefined,
+        hasDates ? period.end_date : undefined
+      );
+
+      setPacket(data.packet);
+      setShowPacket(true);
+    } catch (requestError) {
+      console.error(requestError);
+
+      if (requestError.response?.status === 401) {
+        localStorage.removeItem("bragstack_token");
+        window.location.href = "/login";
+        return;
+      }
+
+      if (requestError.response?.status === 403) {
+        setPacketError(
+          "Performance Review Packets are included with BragStack Pro. Your standard career reports remain available on Free."
+        );
+      } else {
+        setPacketError(
+          requestError.response?.data?.detail ??
+            "The Performance Review Packet could not be built."
+        );
+      }
+    } finally {
+      setIsPacketLoading(false);
+    }
+  }
+
+  if (showPacket && packet) {
+    return (
+      <PerformancePacketPreview
+        packet={packet}
+        onBack={() => setShowPacket(false)}
+      />
+    );
   }
 
   const totals = report?.totals ?? {};
@@ -350,6 +413,29 @@ function ReportsPage() {
                 : "All recorded work"}
             </span>
           </section>
+
+          <section className="packet-builder-card">
+            <div className="packet-builder-copy">
+              <span>Pro · Paper-first</span>
+              <h2>Build a Performance Review Packet</h2>
+              <p>
+                Turn this review period into a professional dossier with a
+                cover, executive scorecard, evidence health, signature
+                accomplishments, and print-ready pages.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleBuildPacket()}
+              disabled={isPacketLoading}
+            >
+              {isPacketLoading ? "Building packet..." : "Build packet"}
+            </button>
+          </section>
+
+          {packetError && (
+            <p className="packet-builder-error">{String(packetError)}</p>
+          )}
 
           <section className="report-export-bar" aria-label="Report exports">
             <div>
