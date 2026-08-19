@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import PacketBuilderPanel from "./PacketBuilderPanel";
 import PerformancePacketPreview from "./PerformancePacketPreview";
 import {
   getAllTimeCareerReport,
@@ -25,6 +26,13 @@ const REPORT_TYPES = [
   { key: "all-time", label: "All time" },
   { key: "custom", label: "Custom" },
 ];
+
+const DEFAULT_PACKET_OPTIONS = {
+  careerArea: "",
+  roleTitle: "",
+  organization: "",
+  confidential: true,
+};
 
 function getToday() {
   return new Date().toISOString().slice(0, 10);
@@ -43,9 +51,7 @@ function formatLabel(value = "") {
 }
 
 function buildReportMarkdown(report) {
-  if (!report) {
-    return "";
-  }
+  if (!report) return "";
 
   const totals = report.totals ?? {};
   const period = report.period ?? {};
@@ -66,7 +72,6 @@ function buildReportMarkdown(report) {
     `- Evidence items: ${totals.evidence_items ?? 0}`,
     `- Confirmed contributions: ${totals.confirmed_assertions ?? 0}`,
     `- Quantified results: ${totals.quantified_results ?? 0}`,
-    `- Public proof: ${(totals.public_entries ?? 0) + (totals.public_receipts ?? 0)}`,
     "",
     "## Top Skills",
     "",
@@ -84,17 +89,8 @@ function buildReportMarkdown(report) {
     report.highlights.forEach((highlight) => {
       lines.push(`### ${highlight.title}`);
       lines.push(`- Category: ${highlight.category ?? "Uncategorized"}`);
-      if (highlight.result) {
-        lines.push(`- Result: ${highlight.result}`);
-      }
-      if (highlight.skills?.length) {
-        lines.push(`- Skills: ${highlight.skills.join(", ")}`);
-      }
-      if (highlight.trust_signals?.length) {
-        lines.push(
-          `- Trust signals: ${highlight.trust_signals.map(formatLabel).join(", ")}`
-        );
-      }
+      if (highlight.result) lines.push(`- Result: ${highlight.result}`);
+      if (highlight.skills?.length) lines.push(`- Skills: ${highlight.skills.join(", ")}`);
       lines.push("");
     });
   } else {
@@ -124,10 +120,10 @@ function ReportsPage() {
   const [isPacketLoading, setIsPacketLoading] = useState(false);
   const [packetError, setPacketError] = useState("");
   const [showPacket, setShowPacket] = useState(false);
+  const [packetOptions, setPacketOptions] = useState(DEFAULT_PACKET_OPTIONS);
 
   async function loadReport(type = activeType) {
     const token = localStorage.getItem("bragstack_token");
-
     if (!token) {
       window.location.href = "/login";
       return;
@@ -140,7 +136,6 @@ function ReportsPage() {
 
     try {
       let data;
-
       if (type === "all-time") {
         data = await getAllTimeCareerReport();
       } else if (type === "custom") {
@@ -154,17 +149,12 @@ function ReportsPage() {
       setShowPacket(false);
     } catch (requestError) {
       console.error(requestError);
-
       if (requestError.response?.status === 401) {
         localStorage.removeItem("bragstack_token");
         window.location.href = "/login";
         return;
       }
-
-      setError(
-        requestError.response?.data?.detail ??
-          "The report could not be generated."
-      );
+      setError(requestError.response?.data?.detail ?? "The report could not be generated.");
     } finally {
       setIsLoading(false);
     }
@@ -178,7 +168,6 @@ function ReportsPage() {
     () => Object.entries(report?.top_skills ?? {}).slice(0, 8),
     [report]
   );
-
   const topCategories = useMemo(
     () => Object.entries(report?.categories ?? {}).slice(0, 8),
     [report]
@@ -187,13 +176,10 @@ function ReportsPage() {
   const filteredHighlights = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const highlights = report?.highlights ?? [];
+    if (!query) return highlights;
 
-    if (!query) {
-      return highlights;
-    }
-
-    return highlights.filter((highlight) => {
-      const searchableText = [
+    return highlights.filter((highlight) =>
+      [
         highlight.title,
         highlight.category,
         highlight.result,
@@ -202,20 +188,16 @@ function ReportsPage() {
       ]
         .filter(Boolean)
         .join(" ")
-        .toLowerCase();
-
-      return searchableText.includes(query);
-    });
+        .toLowerCase()
+        .includes(query)
+    );
   }, [report, searchQuery]);
 
   function handleTypeChange(type) {
     setActiveType(type);
     setSearchQuery("");
     setPacketError("");
-
-    if (type !== "custom") {
-      void loadReport(type);
-    }
+    if (type !== "custom") void loadReport(type);
   }
 
   function handleCustomSubmit(event) {
@@ -242,8 +224,7 @@ function ReportsPage() {
 
   function handleCopyBullets() {
     const bullets = report?.resume_bullets ?? [];
-    const text = bullets.map((bullet) => `- ${bullet}`).join("\n");
-    void copyText(text, "Résumé bullets copied.");
+    void copyText(bullets.map((bullet) => `- ${bullet}`).join("\n"), "Résumé bullets copied.");
   }
 
   function handleDownloadReport() {
@@ -251,8 +232,7 @@ function ReportsPage() {
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const periodName =
-      report?.period?.label?.toLowerCase().replace(/\s+/g, "-") || "career";
+    const periodName = report?.period?.label?.toLowerCase().replace(/\s+/g, "-") || "career";
 
     link.href = url;
     link.download = `bragstack-${periodName}-report.md`;
@@ -264,9 +244,7 @@ function ReportsPage() {
   }
 
   async function handleBuildPacket() {
-    if (!report) {
-      return;
-    }
+    if (!report) return;
 
     setIsPacketLoading(true);
     setPacketError("");
@@ -276,14 +254,13 @@ function ReportsPage() {
       const hasDates = Boolean(period.start_date && period.end_date);
       const data = await getPerformancePacket(
         hasDates ? period.start_date : undefined,
-        hasDates ? period.end_date : undefined
+        hasDates ? period.end_date : undefined,
+        packetOptions
       );
-
       setPacket(data.packet);
       setShowPacket(true);
     } catch (requestError) {
       console.error(requestError);
-
       if (requestError.response?.status === 401) {
         localStorage.removeItem("bragstack_token");
         window.location.href = "/login";
@@ -306,12 +283,7 @@ function ReportsPage() {
   }
 
   if (showPacket && packet) {
-    return (
-      <PerformancePacketPreview
-        packet={packet}
-        onBack={() => setShowPacket(false)}
-      />
-    );
+    return <PerformancePacketPreview packet={packet} onBack={() => setShowPacket(false)} />;
   }
 
   const totals = report?.totals ?? {};
@@ -324,12 +296,11 @@ function ReportsPage() {
             <ArrowLeft size={17} />
             Dashboard
           </a>
-
           <p className="reports-eyebrow">BragStack Reports</p>
           <h1>Turn your proof into a career summary.</h1>
           <p className="reports-intro">
-            Review recent work, see your all-time impact, or build a report for
-            a specific review period.
+            Review recent work, see your all-time impact, or build a report for a
+            specific review period.
           </p>
         </div>
 
@@ -361,24 +332,12 @@ function ReportsPage() {
         <form className="custom-report-form" onSubmit={handleCustomSubmit}>
           <label>
             Start date
-            <input
-              type="date"
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
-              required
-            />
+            <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} required />
           </label>
-
           <label>
             End date
-            <input
-              type="date"
-              value={endDate}
-              onChange={(event) => setEndDate(event.target.value)}
-              required
-            />
+            <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} required />
           </label>
-
           <button type="submit" disabled={isLoading}>
             <CalendarDays size={17} />
             Generate report
@@ -397,16 +356,10 @@ function ReportsPage() {
         <>
           <section className="report-summary-card">
             <div>
-              <p className="reports-eyebrow">
-                {report.period?.label ?? "Career report"}
-              </p>
+              <p className="reports-eyebrow">{report.period?.label ?? "Career report"}</p>
               <h2>{report.summary}</h2>
-              <p>
-                Report dates use the date the work happened, not simply the day
-                it was added to BragStack.
-              </p>
+              <p>Report dates use the date the work happened, not simply the day it was added to BragStack.</p>
             </div>
-
             <span className="report-period-badge">
               {report.period?.start_date && report.period?.end_date
                 ? `${report.period.start_date} → ${report.period.end_date}`
@@ -414,28 +367,13 @@ function ReportsPage() {
             </span>
           </section>
 
-          <section className="packet-builder-card">
-            <div className="packet-builder-copy">
-              <span>Pro · Paper-first</span>
-              <h2>Build a Performance Review Packet</h2>
-              <p>
-                Turn this review period into a professional dossier with a
-                cover, executive scorecard, evidence health, signature
-                accomplishments, and print-ready pages.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void handleBuildPacket()}
-              disabled={isPacketLoading}
-            >
-              {isPacketLoading ? "Building packet..." : "Build packet"}
-            </button>
-          </section>
-
-          {packetError && (
-            <p className="packet-builder-error">{String(packetError)}</p>
-          )}
+          <PacketBuilderPanel
+            options={packetOptions}
+            onChange={setPacketOptions}
+            onBuild={() => void handleBuildPacket()}
+            isLoading={isPacketLoading}
+            error={packetError}
+          />
 
           <section className="report-export-bar" aria-label="Report exports">
             <div>
@@ -443,79 +381,32 @@ function ReportsPage() {
               <span>Copy reusable text or download a portable Markdown report.</span>
             </div>
             <div className="report-export-actions">
-              <button type="button" onClick={handleCopyBullets}>
-                <Clipboard size={16} />
-                Copy résumé bullets
-              </button>
-              <button type="button" onClick={handleCopyReport}>
-                <Clipboard size={16} />
-                Copy Markdown
-              </button>
-              <button type="button" onClick={handleDownloadReport}>
-                <Download size={16} />
-                Download .md
-              </button>
+              <button type="button" onClick={handleCopyBullets}><Clipboard size={16} />Copy résumé bullets</button>
+              <button type="button" onClick={handleCopyReport}><Clipboard size={16} />Copy Markdown</button>
+              <button type="button" onClick={handleDownloadReport}><Download size={16} />Download .md</button>
             </div>
           </section>
 
           {copyNotice && <p className="report-copy-notice">{copyNotice}</p>}
 
           <section className="report-metrics">
-            <article>
-              <FileText size={20} />
-              <span>Accomplishments</span>
-              <strong>{totals.entries ?? 0}</strong>
-            </article>
-
-            <article>
-              <Sparkles size={20} />
-              <span>Impact Receipts</span>
-              <strong>{totals.impact_receipts ?? 0}</strong>
-            </article>
-
-            <article>
-              <ShieldCheck size={20} />
-              <span>Evidence items</span>
-              <strong>{totals.evidence_items ?? 0}</strong>
-            </article>
-
-            <article>
-              <ShieldCheck size={20} />
-              <span>Confirmed contributions</span>
-              <strong>{totals.confirmed_assertions ?? 0}</strong>
-            </article>
-
-            <article>
-              <Sparkles size={20} />
-              <span>Quantified results</span>
-              <strong>{totals.quantified_results ?? 0}</strong>
-            </article>
-
-            <article>
-              <FileText size={20} />
-              <span>Public proof</span>
-              <strong>
-                {(totals.public_entries ?? 0) +
-                  (totals.public_receipts ?? 0)}
-              </strong>
-            </article>
+            <article><FileText size={20} /><span>Accomplishments</span><strong>{totals.entries ?? 0}</strong></article>
+            <article><Sparkles size={20} /><span>Impact Receipts</span><strong>{totals.impact_receipts ?? 0}</strong></article>
+            <article><ShieldCheck size={20} /><span>Evidence items</span><strong>{totals.evidence_items ?? 0}</strong></article>
+            <article><ShieldCheck size={20} /><span>Confirmed contributions</span><strong>{totals.confirmed_assertions ?? 0}</strong></article>
+            <article><Sparkles size={20} /><span>Quantified results</span><strong>{totals.quantified_results ?? 0}</strong></article>
+            <article><FileText size={20} /><span>Public proof</span><strong>{(totals.public_entries ?? 0) + (totals.public_receipts ?? 0)}</strong></article>
           </section>
 
           <section className="report-two-column">
             <article className="report-panel">
               <p className="reports-eyebrow">Skill signal</p>
               <h2>Top skills</h2>
-
               {topSkills.length === 0 ? (
                 <p className="report-muted">No skill data for this period.</p>
               ) : (
                 <div className="report-ranked-list">
-                  {topSkills.map(([skill, count]) => (
-                    <div key={skill}>
-                      <span>{skill}</span>
-                      <strong>{count}</strong>
-                    </div>
-                  ))}
+                  {topSkills.map(([skill, count]) => <div key={skill}><span>{skill}</span><strong>{count}</strong></div>)}
                 </div>
               )}
             </article>
@@ -523,17 +414,11 @@ function ReportsPage() {
             <article className="report-panel">
               <p className="reports-eyebrow">Work mix</p>
               <h2>Top categories</h2>
-
               {topCategories.length === 0 ? (
                 <p className="report-muted">No category data for this period.</p>
               ) : (
                 <div className="report-ranked-list">
-                  {topCategories.map(([category, count]) => (
-                    <div key={category}>
-                      <span>{category}</span>
-                      <strong>{count}</strong>
-                    </div>
-                  ))}
+                  {topCategories.map(([category, count]) => <div key={category}><span>{category}</span><strong>{count}</strong></div>)}
                 </div>
               )}
             </article>
@@ -541,10 +426,7 @@ function ReportsPage() {
 
           <section className="report-panel report-highlights">
             <div className="report-panel-heading">
-              <div>
-                <p className="reports-eyebrow">Career proof</p>
-                <h2>Highlights</h2>
-              </div>
+              <div><p className="reports-eyebrow">Career proof</p><h2>Highlights</h2></div>
               <span>{filteredHighlights.length} shown</span>
             </div>
 
@@ -563,62 +445,38 @@ function ReportsPage() {
                 {filteredHighlights.map((highlight) => (
                   <article key={highlight.entry_id}>
                     <div className="report-highlight-top">
-                      <div>
-                        <p>{highlight.category}</p>
-                        <h3>{highlight.title}</h3>
-                      </div>
-
+                      <div><p>{highlight.category}</p><h3>{highlight.title}</h3></div>
                       <div className="report-highlight-badges">
                         {highlight.has_receipt && <span>Impact Receipt</span>}
                         {highlight.is_public && <span>Public</span>}
                       </div>
                     </div>
-
                     {highlight.result && <p>{highlight.result}</p>}
-
                     <div className="report-skill-tags">
-                      {highlight.skills?.map((skill) => (
-                        <span key={`${highlight.entry_id}-${skill}`}>
-                          {skill}
-                        </span>
-                      ))}
+                      {highlight.skills?.map((skill) => <span key={`${highlight.entry_id}-${skill}`}>{skill}</span>)}
                     </div>
-
                     {highlight.trust_signals?.length > 0 && (
                       <div className="report-trust-line">
-                        {highlight.trust_signals.map((signal) => (
-                          <span key={`${highlight.entry_id}-${signal}`}>
-                            {formatLabel(signal)}
-                          </span>
-                        ))}
+                        {highlight.trust_signals.map((signal) => <span key={`${highlight.entry_id}-${signal}`}>{formatLabel(signal)}</span>)}
                       </div>
                     )}
                   </article>
                 ))}
               </div>
             ) : (
-              <p className="report-muted">
-                {searchQuery
-                  ? "No highlights match that search."
-                  : "No accomplishments were recorded for this period."}
-              </p>
+              <p className="report-muted">{searchQuery ? "No highlights match that search." : "No accomplishments were recorded for this period."}</p>
             )}
           </section>
 
           <section className="report-panel">
             <p className="reports-eyebrow">Ready-to-use material</p>
             <h2>Résumé bullets</h2>
-
             {report.resume_bullets?.length ? (
               <ul className="resume-bullet-list">
-                {report.resume_bullets.map((bullet, index) => (
-                  <li key={`${index}-${bullet}`}>{bullet}</li>
-                ))}
+                {report.resume_bullets.map((bullet, index) => <li key={`${index}-${bullet}`}>{bullet}</li>)}
               </ul>
             ) : (
-              <p className="report-muted">
-                No résumé bullets were generated for this period.
-              </p>
+              <p className="report-muted">No résumé bullets were generated for this period.</p>
             )}
           </section>
         </>
