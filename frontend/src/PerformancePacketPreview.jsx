@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import PerformancePacketPages from "./PerformancePacketPages";
 import "./PerformancePacketPreview.css";
 
 function formatDate(value) {
@@ -95,6 +96,7 @@ function PacketFooter({ page }) {
 function PerformancePacketPreview({ packet, onBack }) {
   const scorecard = packet?.scorecard ?? {};
   const subject = packet?.subject ?? {};
+  const context = packet?.context ?? {};
   const topSignature = packet?.signature_accomplishments?.[0];
   const generatedDate = formatDate(packet?.generated_at);
 
@@ -108,12 +110,12 @@ function PerformancePacketPreview({ packet, onBack }) {
 
         <div>
           <span>Performance Packet</span>
-          <strong>Print-first preview</strong>
+          <strong>Physical dossier preview</strong>
         </div>
 
         <button type="button" onClick={() => window.print()}>
           <Printer size={17} />
-          Print preview
+          Print / Save PDF
         </button>
       </header>
 
@@ -124,13 +126,23 @@ function PerformancePacketPreview({ packet, onBack }) {
               <span className="packet-wordmark-mark">B</span>
               <span>BRAGSTACK</span>
             </div>
-            <span className="packet-confidential">Professional development record</span>
+            <span className="packet-confidential">
+              {packet?.confidential
+                ? "Confidential · Professional development record"
+                : "Professional development record"}
+            </span>
           </div>
 
           <div className="packet-cover-main">
             <p className="packet-document-type">Performance Review Packet</p>
             <h1>{subject.name || "BragStack Member"}</h1>
             <h2>{subject.role || "Professional"}</h2>
+            {context.organization && (
+              <p className="packet-cover-context">{context.organization}</p>
+            )}
+            {context.career_area && (
+              <p className="packet-cover-context">{context.career_area}</p>
+            )}
             {subject.location && <p className="packet-location">{subject.location}</p>}
 
             <div className="packet-cover-rule" />
@@ -286,6 +298,8 @@ function PerformancePacketPreview({ packet, onBack }) {
 
           <PacketFooter page={2} />
         </section>
+
+        <PerformancePacketPages packet={packet} />
       </div>
     </main>
   );
