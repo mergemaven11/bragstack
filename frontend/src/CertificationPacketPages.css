@@ -1,0 +1,197 @@
+.credential-review-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+  margin: 18px 0 22px;
+  padding: 20px;
+  border: 1px solid #dedad0;
+  border-radius: 16px;
+  background: #f7f5ef;
+  color: #173f43;
+}
+
+.credential-review-hero span,
+.credential-requirements-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: #667176;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.credential-review-hero h3 {
+  margin: 0;
+  color: #172126;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+}
+
+.credential-review-hero p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 7px 0 0;
+  color: #586268;
+}
+
+.credential-kpi-ribbon {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.credential-trust-note,
+.credential-requirements-card {
+  margin-top: 18px;
+  padding: 15px 16px;
+  border: 1px solid #dedad0;
+  border-radius: 13px;
+  background: #fffefa;
+}
+
+.credential-trust-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #173f43;
+}
+
+.credential-trust-note p,
+.credential-requirements-card p {
+  margin: 0;
+  color: #59646a;
+  line-height: 1.55;
+}
+
+.credential-evidence-list,
+.credential-experience-list,
+.credential-index-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.credential-evidence-list article,
+.credential-experience-list article,
+.credential-index-list article {
+  border: 1px solid #dedad0;
+  border-radius: 13px;
+  background: #fffefa;
+}
+
+.credential-evidence-list article,
+.credential-experience-list article {
+  padding: 15px 16px;
+}
+
+.credential-evidence-topline,
+.credential-experience-list article > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #667176;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.credential-evidence-list h3,
+.credential-experience-list h3 {
+  margin: 8px 0 5px;
+  color: #172126;
+  font-size: 16px;
+}
+
+.credential-evidence-list p,
+.credential-experience-list p {
+  margin: 5px 0 0;
+  color: #586268;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.credential-evidence-list small,
+.credential-index-list small {
+  display: block;
+  margin-top: 7px;
+  color: #1f5559;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.credential-status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid #d9d4c9;
+  background: #f3f1ea;
+  color: #59646a;
+  font-size: 9px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.credential-status-chip.confirmed {
+  border-color: rgba(31, 85, 89, 0.25);
+  background: rgba(31, 85, 89, 0.08);
+  color: #173f43;
+}
+
+.credential-status-chip.organization-issued {
+  border-color: rgba(182, 139, 76, 0.35);
+  background: rgba(182, 139, 76, 0.1);
+  color: #765625;
+}
+
+.credential-index-list article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 11px 12px;
+}
+
+.credential-index-list article > svg {
+  color: #1f5559;
+  margin-top: 2px;
+}
+
+.credential-index-list strong,
+.credential-index-list span {
+  display: block;
+}
+
+.credential-index-list strong {
+  color: #172126;
+  font-size: 12px;
+}
+
+.credential-index-list span {
+  margin-top: 3px;
+  color: #667176;
+  font-size: 10px;
+}
+
+.credential-summary-narrative {
+  margin-top: 20px;
+}
+
+@media (max-width: 760px) {
+  .credential-kpi-ribbon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .credential-index-list article {
+    grid-template-columns: auto 1fr;
+  }
+
+  .credential-index-list .credential-status-chip {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
