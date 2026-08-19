@@ -161,7 +161,11 @@ function ReportsPage() {
   }
 
   useEffect(() => {
-    void loadReport("weekly");
+    const timeoutId = window.setTimeout(() => {
+      void loadReport("weekly");
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   const topSkills = useMemo(
