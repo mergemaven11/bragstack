@@ -20,18 +20,20 @@ const CAREER_AREAS = [
 ];
 
 const PACKET_TYPES = [
-  {
-    value: "performance-review",
-    label: "Performance Review Packet",
-  },
-  {
-    value: "promotion",
-    label: "Promotion Packet",
-  },
-  {
-    value: "interview",
-    label: "Interview Packet",
-  },
+  { value: "performance-review", label: "Performance Review Packet" },
+  { value: "promotion", label: "Promotion Packet" },
+  { value: "interview", label: "Interview Packet" },
+  { value: "certification", label: "Certification & Licensure Packet" },
+];
+
+const CREDENTIAL_REVIEW_TYPES = [
+  "Certification / Licensure Review",
+  "License Renewal",
+  "Certification Review",
+  "Recertification",
+  "Continuing Education Review",
+  "Competency Review",
+  "Other Credential Review",
 ];
 
 function PacketBuilderPanel({
@@ -45,13 +47,11 @@ function PacketBuilderPanel({
   const packetType = options.packetType || "performance-review";
   const isPromotion = packetType === "promotion";
   const isInterview = packetType === "interview";
+  const isCertification = packetType === "certification";
   const selectedEntryIds = options.selectedEntryIds ?? [];
 
   function update(name, value) {
-    onChange((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    onChange((current) => ({ ...current, [name]: value }));
   }
 
   function changePacketType(value) {
@@ -73,17 +73,10 @@ function PacketBuilderPanel({
     onChange((current) => {
       const selected = current.selectedEntryIds ?? [];
       if (selected.includes(entryId)) {
-        return {
-          ...current,
-          selectedEntryIds: selected.filter((id) => id !== entryId),
-        };
+        return { ...current, selectedEntryIds: selected.filter((id) => id !== entryId) };
       }
-
       if (selected.length >= 8) return current;
-      return {
-        ...current,
-        selectedEntryIds: [...selected, entryId],
-      };
+      return { ...current, selectedEntryIds: [...selected, entryId] };
     });
   }
 
@@ -91,23 +84,25 @@ function PacketBuilderPanel({
     ? "Promotion Packet"
     : isInterview
       ? "Interview Packet"
-      : "Performance Review Packet";
+      : isCertification
+        ? "Certification & Licensure Packet"
+        : "Performance Review Packet";
 
   const description = isPromotion
     ? "Organize documented impact, increased responsibility, growth, recognition, and supporting evidence into a professional promotion case—without inventing a readiness score."
     : isInterview
       ? "Select the accomplishments you want to talk about, turn them into evidence-backed interview stories, and surface prep questions wherever your record is missing context."
-      : "Create a physical-style career dossier with analytics, measurable results, skills, contribution records, Impact Receipts, and an evidence index. The language stays useful across any profession.";
+      : isCertification
+        ? "Organize credentials, continuing education, demonstrated competencies, experience, and supporting evidence for certification, licensure, renewal, or regulated-career reviews—without calling self-added proof verified."
+        : "Create a physical-style career dossier with analytics, measurable results, skills, contribution records, Impact Receipts, and an evidence index. The language stays useful across any profession.";
 
   return (
     <section className="packet-builder-pro" aria-labelledby="packet-builder-title">
       <div className="packet-builder-pro-header">
-        <div className="packet-builder-pro-icon">
-          <FileStack size={22} />
-        </div>
+        <div className="packet-builder-pro-icon"><FileStack size={22} /></div>
         <div>
           <span>BragStack Pro · Premium Artifact</span>
-          <h2 id="packet-builder-title">Build an {isInterview ? "Interview Packet" : title}</h2>
+          <h2 id="packet-builder-title">Build {isInterview ? "an" : "a"} {title}</h2>
           <p>{description}</p>
         </div>
       </div>
@@ -115,76 +110,37 @@ function PacketBuilderPanel({
       <div className="packet-builder-fields">
         <label>
           <span>Packet type</span>
-          <select
-            value={packetType}
-            onChange={(event) => changePacketType(event.target.value)}
-          >
-            {PACKET_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
+          <select value={packetType} onChange={(event) => changePacketType(event.target.value)}>
+            {PACKET_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
           </select>
         </label>
 
         <label>
           <span>Career / work area</span>
-          <select
-            value={options.careerArea ?? ""}
-            onChange={(event) => update("careerArea", event.target.value)}
-          >
-            {CAREER_AREAS.map((area) => (
-              <option key={area || "neutral"} value={area}>
-                {area || "Career-neutral"}
-              </option>
-            ))}
+          <select value={options.careerArea ?? ""} onChange={(event) => update("careerArea", event.target.value)}>
+            {CAREER_AREAS.map((area) => <option key={area || "neutral"} value={area}>{area || "Career-neutral"}</option>)}
           </select>
         </label>
 
         <label>
           <span>Current role title</span>
-          <input
-            type="text"
-            value={options.roleTitle ?? ""}
-            onChange={(event) => update("roleTitle", event.target.value)}
-            placeholder="Use profile headline"
-            maxLength={160}
-          />
+          <input type="text" value={options.roleTitle ?? ""} onChange={(event) => update("roleTitle", event.target.value)} placeholder="Use profile headline" maxLength={160} />
         </label>
 
         <label>
           <span>Organization / team</span>
-          <input
-            type="text"
-            value={options.organization ?? ""}
-            onChange={(event) => update("organization", event.target.value)}
-            placeholder="Optional"
-            maxLength={180}
-          />
+          <input type="text" value={options.organization ?? ""} onChange={(event) => update("organization", event.target.value)} placeholder="Optional" maxLength={180} />
         </label>
 
         {isPromotion && (
           <>
             <label>
               <span>Target role</span>
-              <input
-                type="text"
-                value={options.targetRole ?? ""}
-                onChange={(event) => update("targetRole", event.target.value)}
-                placeholder="Example: Senior Manager, Lead Teacher, RN II"
-                maxLength={160}
-              />
+              <input type="text" value={options.targetRole ?? ""} onChange={(event) => update("targetRole", event.target.value)} placeholder="Example: Senior Manager, Lead Teacher, RN II" maxLength={160} />
             </label>
-
             <label>
               <span>Target level / progression</span>
-              <input
-                type="text"
-                value={options.targetLevel ?? ""}
-                onChange={(event) => update("targetLevel", event.target.value)}
-                placeholder="Optional level, grade, title, or progression step"
-                maxLength={120}
-              />
+              <input type="text" value={options.targetLevel ?? ""} onChange={(event) => update("targetLevel", event.target.value)} placeholder="Optional level, grade, title, or progression step" maxLength={120} />
             </label>
           </>
         )}
@@ -193,24 +149,34 @@ function PacketBuilderPanel({
           <>
             <label>
               <span>Target role</span>
-              <input
-                type="text"
-                value={options.targetRole ?? ""}
-                onChange={(event) => update("targetRole", event.target.value)}
-                placeholder="Example: Assistant Principal, Store Manager, Designer"
-                maxLength={160}
-              />
+              <input type="text" value={options.targetRole ?? ""} onChange={(event) => update("targetRole", event.target.value)} placeholder="Example: Assistant Principal, Store Manager, Designer" maxLength={160} />
             </label>
-
             <label>
               <span>Target organization</span>
-              <input
-                type="text"
-                value={options.targetOrganization ?? ""}
-                onChange={(event) => update("targetOrganization", event.target.value)}
-                placeholder="Optional employer or organization"
-                maxLength={180}
-              />
+              <input type="text" value={options.targetOrganization ?? ""} onChange={(event) => update("targetOrganization", event.target.value)} placeholder="Optional employer or organization" maxLength={180} />
+            </label>
+          </>
+        )}
+
+        {isCertification && (
+          <>
+            <label>
+              <span>Credential / license name</span>
+              <input type="text" value={options.credentialName ?? ""} onChange={(event) => update("credentialName", event.target.value)} placeholder="Example: RN License Renewal, OSHA 30, Teaching Certificate" maxLength={180} />
+            </label>
+            <label>
+              <span>Issuing / reviewing body</span>
+              <input type="text" value={options.issuingBody ?? ""} onChange={(event) => update("issuingBody", event.target.value)} placeholder="Board, agency, association, employer, school..." maxLength={180} />
+            </label>
+            <label>
+              <span>Review type</span>
+              <select value={options.reviewType ?? "Certification / Licensure Review"} onChange={(event) => update("reviewType", event.target.value)}>
+                {CREDENTIAL_REVIEW_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+              </select>
+            </label>
+            <label className="packet-builder-wide-field">
+              <span>Requirements / notes</span>
+              <textarea value={options.requirementNotes ?? ""} onChange={(event) => update("requirementNotes", event.target.value)} placeholder="Optional: continuing education, supervised hours, competencies, renewal requirements, or documents to include." maxLength={1200} rows={3} />
             </label>
           </>
         )}
@@ -219,15 +185,9 @@ function PacketBuilderPanel({
       {isInterview && (
         <section className="packet-story-picker" aria-label="Interview story selection">
           <div className="packet-story-picker-heading">
-            <div>
-              <span>Choose your interview stories</span>
-              <strong>{selectedEntryIds.length} of 8 selected</strong>
-            </div>
-            <p>
-              Pick the accomplishments you actually want to discuss. BragStack will not invent missing story details.
-            </p>
+            <div><span>Choose your interview stories</span><strong>{selectedEntryIds.length} of 8 selected</strong></div>
+            <p>Pick the accomplishments you actually want to discuss. BragStack will not invent missing story details.</p>
           </div>
-
           {highlights.length ? (
             <div className="packet-story-options">
               {highlights.map((highlight) => {
@@ -235,18 +195,10 @@ function PacketBuilderPanel({
                 const disabled = !checked && selectedEntryIds.length >= 8;
                 return (
                   <label key={highlight.entry_id} className={checked ? "selected" : ""}>
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      disabled={disabled}
-                      onChange={() => toggleInterviewStory(highlight.entry_id)}
-                    />
+                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleInterviewStory(highlight.entry_id)} />
                     <span>
                       <strong>{highlight.title}</strong>
-                      <small>
-                        {highlight.category || "Accomplishment"}
-                        {highlight.result ? ` · ${highlight.result}` : ""}
-                      </small>
+                      <small>{highlight.category || "Accomplishment"}{highlight.result ? ` · ${highlight.result}` : ""}</small>
                     </span>
                   </label>
                 );
@@ -255,51 +207,31 @@ function PacketBuilderPanel({
           ) : (
             <p className="packet-story-empty">Add accomplishments to choose interview stories.</p>
           )}
-
           <label className="packet-evidence-export-toggle">
-            <input
-              type="checkbox"
-              checked={options.includeEvidenceReferences === true}
-              onChange={(event) => update("includeEvidenceReferences", event.target.checked)}
-            />
-            <span>
-              Include evidence references in this packet
-              <small>Off by default so private proof stays private unless you explicitly export it.</small>
-            </span>
+            <input type="checkbox" checked={options.includeEvidenceReferences === true} onChange={(event) => update("includeEvidenceReferences", event.target.checked)} />
+            <span>Include evidence references in this packet<small>Off by default so private proof stays private unless you explicitly export it.</small></span>
           </label>
         </section>
       )}
 
       <div className="packet-builder-pro-footer">
         <label className="packet-confidential-toggle">
-          <input
-            type="checkbox"
-            checked={options.confidential !== false}
-            onChange={(event) => update("confidential", event.target.checked)}
-          />
-          <span>
-            <ShieldCheck size={16} />
-            Mark packet confidential
-          </span>
+          <input type="checkbox" checked={options.confidential !== false} onChange={(event) => update("confidential", event.target.checked)} />
+          <span><ShieldCheck size={16} />Mark packet confidential</span>
         </label>
 
         <div className="packet-builder-pro-action">
-          <div>
-            <BriefcaseBusiness size={16} />
-            Uses the currently selected report period
-          </div>
-          <button
-            type="button"
-            onClick={onBuild}
-            disabled={isLoading || (isInterview && selectedEntryIds.length === 0)}
-          >
+          <div><BriefcaseBusiness size={16} />Uses the currently selected report period</div>
+          <button type="button" onClick={onBuild} disabled={isLoading || (isInterview && selectedEntryIds.length === 0)}>
             {isLoading
               ? "Building packet…"
               : isPromotion
                 ? "Build promotion packet"
                 : isInterview
                   ? "Build interview packet"
-                  : "Build performance packet"}
+                  : isCertification
+                    ? "Build certification packet"
+                    : "Build performance packet"}
           </button>
         </div>
       </div>
