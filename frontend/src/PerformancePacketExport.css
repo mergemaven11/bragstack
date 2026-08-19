@@ -1,0 +1,65 @@
+.packet-preview-toolbar-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.packet-preview-toolbar .packet-download-button {
+  background: #173f43;
+  color: #fff;
+  border-color: #173f43;
+  box-shadow: 0 10px 28px rgba(23, 63, 67, 0.18);
+}
+
+.packet-preview-toolbar .packet-download-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.packet-preview-download-error {
+  width: min(900px, 100%);
+  margin: -10px auto 18px;
+  padding: 11px 14px;
+  border: 1px solid rgba(139, 87, 36, 0.22);
+  border-radius: 12px;
+  background: #fff8eb;
+  color: #714b22;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .packet-preview-toolbar-actions {
+    gap: 6px;
+  }
+
+  .packet-preview-toolbar-actions button {
+    padding-inline: 10px;
+  }
+}
+
+@media (max-width: 520px) {
+  .packet-preview-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .packet-preview-toolbar > button,
+  .packet-preview-toolbar-actions {
+    width: 100%;
+  }
+
+  .packet-preview-toolbar-actions {
+    justify-self: stretch;
+  }
+
+  .packet-preview-toolbar-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media print {
+  .packet-preview-download-error {
+    display: none;
+  }
+}

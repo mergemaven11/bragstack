@@ -26,6 +26,26 @@ function getPublicBragPath(slug, suffix = "") {
   return `/public/brag/${encodeURIComponent(normalizedSlug)}${suffix}`;
 }
 
+function getPacketParams(startDate, endDate, options = {}) {
+  return {
+    ...(startDate && endDate
+      ? {
+          start_date: startDate,
+          end_date: endDate,
+        }
+      : {}),
+    ...(options.careerArea ? { career_area: options.careerArea } : {}),
+    ...(options.roleTitle ? { role_title: options.roleTitle } : {}),
+    ...(options.organization ? { organization: options.organization } : {}),
+    confidential: options.confidential !== false,
+  };
+}
+
+function parseDownloadFilename(contentDisposition, fallback) {
+  const match = contentDisposition?.match(/filename="?([^";]+)"?/i);
+  return match?.[1] || fallback;
+}
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("bragstack_token");
 
@@ -163,6 +183,38 @@ export async function getCustomCareerReport(startDate, endDate) {
     },
   });
   return response.data;
+}
+
+export async function getPerformancePacket(startDate, endDate, options = {}) {
+  const response = await api.get("/packets/performance-review", {
+    params: getPacketParams(startDate, endDate, options),
+  });
+  return response.data;
+}
+
+export async function downloadPerformancePacketPdf(packet) {
+  const period = packet?.period ?? {};
+  const context = packet?.context ?? {};
+  const subject = packet?.subject ?? {};
+  const params = getPacketParams(period.start_date, period.end_date, {
+    careerArea: context.career_area,
+    roleTitle: subject.role,
+    organization: context.organization,
+    confidential: packet?.confidential !== false,
+  });
+
+  const response = await api.get("/packets/performance-review.pdf", {
+    params,
+    responseType: "blob",
+  });
+
+  return {
+    blob: response.data,
+    filename: parseDownloadFilename(
+      response.headers["content-disposition"],
+      "bragstack-performance-review.pdf"
+    ),
+  };
 }
 
 export async function getPublicImpactReceipts(slug) {

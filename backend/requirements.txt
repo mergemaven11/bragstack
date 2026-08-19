@@ -10,3 +10,4 @@ email-validator
 pytest
 httpx
 mongomock
+reportlab==4.4.3

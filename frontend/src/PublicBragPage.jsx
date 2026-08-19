@@ -132,10 +132,6 @@ function PublicBragPage() {
     void loadPage();
   }, [publicSlug, page]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm, activeFilter]);
-
   const filteredEntries = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
 
@@ -148,7 +144,6 @@ function PublicBragPage() {
   }, [entries, searchTerm, activeFilter]);
 
   const categories = Object.entries(categoriesSummary?.categories ?? {});
-  const tags = Object.entries(tagsSummary?.tags ?? {});
   const maxCategoryCount = Math.max(...categories.map(([, count]) => count), 1);
   const maxActivity = Math.max(
     ...entryMeta.activity_last_6_months.map((item) => item.count),
@@ -174,14 +169,19 @@ function PublicBragPage() {
 
   const displayName = profile?.name || "BragStack member";
   const avatarLetter = displayName.charAt(0).toUpperCase() || "B";
-  const totalPages = Math.max(
-    1,
-    Math.ceil(entryMeta.total_entries / PAGE_SIZE),
-  );
-  const start = entryMeta.total_entries
-    ? (page - 1) * PAGE_SIZE + 1
-    : 0;
+  const totalPages = Math.max(1, Math.ceil(entryMeta.total_entries / PAGE_SIZE));
+  const start = entryMeta.total_entries ? (page - 1) * PAGE_SIZE + 1 : 0;
   const end = Math.min(page * PAGE_SIZE, entryMeta.total_entries);
+
+  function handleSearchChange(event) {
+    setSearchTerm(event.target.value);
+    setPage(1);
+  }
+
+  function handleFilterChange(filter) {
+    setActiveFilter(filter);
+    setPage(1);
+  }
 
   return (
     <main className="proof-profile">
@@ -197,10 +197,7 @@ function PublicBragPage() {
         <section className="proof-hero">
           <div>
             <p className="proof-eyebrow">Proof Profile</p>
-            <h1>
-              Career proof,
-              <span>not just claims.</span>
-            </h1>
+            <h1>Career proof,<span>not just claims.</span></h1>
             <p className="proof-headline">
               {profile?.headline || `${displayName}'s evidence-backed career story`}
             </p>
@@ -210,39 +207,22 @@ function PublicBragPage() {
             </p>
 
             {profile?.location && (
-              <p className="proof-location">
-                <MapPin size={15} /> {profile.location}
-              </p>
+              <p className="proof-location"><MapPin size={15} /> {profile.location}</p>
             )}
 
             <div className="proof-actions">
               {profile?.github_url && (
-                <a
-                  className="proof-action primary"
-                  href={profile.github_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="proof-action primary" href={profile.github_url} target="_blank" rel="noreferrer">
                   GitHub <ExternalLink size={15} />
                 </a>
               )}
               {profile?.portfolio_url && (
-                <a
-                  className="proof-action"
-                  href={profile.portfolio_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="proof-action" href={profile.portfolio_url} target="_blank" rel="noreferrer">
                   Portfolio <ExternalLink size={15} />
                 </a>
               )}
               {profile?.resume_url && (
-                <a
-                  className="proof-action"
-                  href={profile.resume_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="proof-action" href={profile.resume_url} target="_blank" rel="noreferrer">
                   Résumé <ExternalLink size={15} />
                 </a>
               )}
@@ -255,32 +235,16 @@ function PublicBragPage() {
               <h2>{displayName}</h2>
             </div>
             <div className="proof-score-grid">
-              <article>
-                <strong>{entryMeta.total_entries}</strong>
-                <span>public wins</span>
-              </article>
-              <article>
-                <strong>{impactReceipts.length}</strong>
-                <span>Impact Receipts</span>
-              </article>
-              <article>
-                <strong>{tagsSummary?.total_unique_tags ?? 0}</strong>
-                <span>skills shown</span>
-              </article>
-              <article>
-                <strong>{weeklyReport?.total_entries ?? 0}</strong>
-                <span>this week</span>
-              </article>
+              <article><strong>{entryMeta.total_entries}</strong><span>public wins</span></article>
+              <article><strong>{impactReceipts.length}</strong><span>Impact Receipts</span></article>
+              <article><strong>{tagsSummary?.total_unique_tags ?? 0}</strong><span>skills shown</span></article>
+              <article><strong>{weeklyReport?.total_entries ?? 0}</strong><span>this week</span></article>
             </div>
           </aside>
         </section>
 
         {isOffline && (
-          <section className="proof-section">
-            <div className="proof-error">
-              Proof Profile data could not be loaded right now.
-            </div>
-          </section>
+          <section className="proof-section"><div className="proof-error">Proof Profile data could not be loaded right now.</div></section>
         )}
 
         {!isOffline && entryMeta.total_entries > 0 && (
@@ -289,31 +253,22 @@ function PublicBragPage() {
               <div>
                 <p className="proof-eyebrow">Career signal</p>
                 <h2>Impact at a glance</h2>
-                <p>
-                  A visual summary of the evidence behind this career story.
-                </p>
+                <p>A visual summary of the evidence behind this career story.</p>
               </div>
-              <span className="proof-live-badge">
-                <Sparkles size={14} /> Live from public proof
-              </span>
+              <span className="proof-live-badge"><Sparkles size={14} /> Live from public proof</span>
             </div>
 
             <div className="proof-kpi-grid">
               <article className="proof-kpi">
-                <span>Receipt coverage</span>
-                <strong>{receiptCoverage}%</strong>
-                <small>
-                  {impactReceipts.length} of {entryMeta.total_entries} wins packaged as receipts
-                </small>
+                <span>Receipt coverage</span><strong>{receiptCoverage}%</strong>
+                <small>{impactReceipts.length} of {entryMeta.total_entries} wins packaged as receipts</small>
               </article>
               <article className="proof-kpi">
-                <span>Evidence-linked</span>
-                <strong>{evidenceCoverage}%</strong>
+                <span>Evidence-linked</span><strong>{evidenceCoverage}%</strong>
                 <small>{evidenceCount} public evidence items</small>
               </article>
               <article className="proof-kpi">
-                <span>Skill breadth</span>
-                <strong>{tagsSummary?.total_unique_tags ?? 0}</strong>
+                <span>Skill breadth</span><strong>{tagsSummary?.total_unique_tags ?? 0}</strong>
                 <small>distinct demonstrated skills</small>
               </article>
             </div>
@@ -327,12 +282,7 @@ function PublicBragPage() {
                       <div className="proof-activity-bar-wrap">
                         <span
                           className="proof-activity-bar"
-                          style={{
-                            height: `${Math.max(
-                              8,
-                              (item.count / maxActivity) * 100,
-                            )}%`,
-                          }}
+                          style={{ height: `${Math.max(8, (item.count / maxActivity) * 100)}%` }}
                           title={`${item.count} accomplishments`}
                         />
                       </div>
@@ -347,19 +297,9 @@ function PublicBragPage() {
                 <div className="proof-bars">
                   {categories.slice(0, 7).map(([category, count]) => (
                     <div className="proof-bar-row" key={category}>
-                      <div className="proof-bar-label">
-                        <span>{category}</span>
-                        <strong>{count}</strong>
-                      </div>
+                      <div className="proof-bar-label"><span>{category}</span><strong>{count}</strong></div>
                       <div className="proof-bar-track">
-                        <span
-                          style={{
-                            width: `${Math.max(
-                              8,
-                              (count / maxCategoryCount) * 100,
-                            )}%`,
-                          }}
-                        />
+                        <span style={{ width: `${Math.max(8, (count / maxCategoryCount) * 100)}%` }} />
                       </div>
                     </div>
                   ))}
@@ -375,13 +315,9 @@ function PublicBragPage() {
               <div>
                 <p className="proof-eyebrow">Featured proof</p>
                 <h2>Impact Receipts</h2>
-                <p>
-                  Structured proof of contribution, result, skills, and evidence.
-                </p>
+                <p>Structured proof of contribution, result, skills, and evidence.</p>
               </div>
-              <span className="proof-live-badge">
-                <ShieldCheck size={14} /> {impactReceipts.length} public
-              </span>
+              <span className="proof-live-badge"><ShieldCheck size={14} /> {impactReceipts.length} public</span>
             </div>
 
             <div className="proof-receipt-grid">
@@ -389,23 +325,11 @@ function PublicBragPage() {
                 <article className="proof-receipt" key={receipt.id}>
                   <p className="proof-eyebrow">Impact Receipt</p>
                   <h3>{receipt.accomplishment}</h3>
-                  <div className="proof-receipt-block">
-                    <span>Contribution</span>
-                    <p>{receipt.contribution}</p>
-                  </div>
-                  <div className="proof-receipt-block">
-                    <span>Result</span>
-                    <p>{receipt.result}</p>
-                  </div>
+                  <div className="proof-receipt-block"><span>Contribution</span><p>{receipt.contribution}</p></div>
+                  <div className="proof-receipt-block"><span>Result</span><p>{receipt.result}</p></div>
                   <div className="proof-chips">
-                    {receipt.trust_signals?.map((signal) => (
-                      <span key={`${receipt.id}-${signal}`}>
-                        {formatSignal(signal)}
-                      </span>
-                    ))}
-                    {receipt.skills?.slice(0, 4).map((skill) => (
-                      <span key={`${receipt.id}-${skill}`}>{skill}</span>
-                    ))}
+                    {receipt.trust_signals?.map((signal) => <span key={`${receipt.id}-${signal}`}>{formatSignal(signal)}</span>)}
+                    {receipt.skills?.slice(0, 4).map((skill) => <span key={`${receipt.id}-${skill}`}>{skill}</span>)}
                   </div>
                 </article>
               ))}
@@ -418,9 +342,7 @@ function PublicBragPage() {
             <div>
               <p className="proof-eyebrow">Evidence library</p>
               <h2>Explore the work</h2>
-              <p>
-                Search the action, impact, projects, skills, and lessons behind the profile.
-              </p>
+              <p>Search the action, impact, projects, skills, and lessons behind the profile.</p>
             </div>
           </div>
 
@@ -429,7 +351,7 @@ function PublicBragPage() {
               <Search size={17} />
               <input
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
+                onChange={handleSearchChange}
                 placeholder="Search this page by skill, action, impact, or project..."
               />
             </div>
@@ -439,7 +361,7 @@ function PublicBragPage() {
                   type="button"
                   key={filter}
                   className={activeFilter === filter ? "active" : ""}
-                  onClick={() => setActiveFilter(filter)}
+                  onClick={() => handleFilterChange(filter)}
                 >
                   {filter}
                 </button>
@@ -448,39 +370,20 @@ function PublicBragPage() {
           </div>
 
           {filteredEntries.length === 0 ? (
-            <div className="proof-empty">
-              No matching proof on this page. Try another filter or page.
-            </div>
+            <div className="proof-empty">No matching proof on this page. Try another filter or page.</div>
           ) : (
             <div className="proof-entry-grid">
               {filteredEntries.map((entry) => (
                 <article className="proof-entry-card" key={entry.id}>
-                  <div>
-                    <p className="proof-eyebrow">{entry.category || "General"}</p>
-                    <h3>{entry.title}</h3>
-                  </div>
-                  <div className="proof-entry-meta">
-                    <span>{entry.entry_type || "General"}</span>
-                    <span>{entry.entry_date || "No date"}</span>
-                  </div>
-                  <div className="proof-entry-impact">
-                    <strong>Impact</strong>
-                    <p>{entry.impact || entry.resume_bullet}</p>
-                  </div>
+                  <div><p className="proof-eyebrow">{entry.category || "General"}</p><h3>{entry.title}</h3></div>
+                  <div className="proof-entry-meta"><span>{entry.entry_type || "General"}</span><span>{entry.entry_date || "No date"}</span></div>
+                  <div className="proof-entry-impact"><strong>Impact</strong><p>{entry.impact || entry.resume_bullet}</p></div>
                   <div className="proof-entry-details">
-                    <div>
-                      <strong>Action</strong>
-                      <p>{entry.action || "No action added."}</p>
-                    </div>
-                    <div>
-                      <strong>Situation</strong>
-                      <p>{entry.situation || "No situation added."}</p>
-                    </div>
+                    <div><strong>Action</strong><p>{entry.action || "No action added."}</p></div>
+                    <div><strong>Situation</strong><p>{entry.situation || "No situation added."}</p></div>
                   </div>
                   <div className="proof-chips">
-                    {normalizeTags(entry.tags).map((tag) => (
-                      <span key={`${entry.id}-${tag}`}>{tag}</span>
-                    ))}
+                    {normalizeTags(entry.tags).map((tag) => <span key={`${entry.id}-${tag}`}>{tag}</span>)}
                   </div>
                 </article>
               ))}
@@ -492,34 +395,18 @@ function PublicBragPage() {
               Showing {start}–{end} of {entryMeta.total_entries} public wins · Page {page} of {totalPages}
             </span>
             <div className="proof-pagination-controls">
-              <button
-                type="button"
-                disabled={page === 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-              >
-                Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-                (pageNumber) => (
-                  <button
-                    type="button"
-                    className={pageNumber === page ? "active" : ""}
-                    key={pageNumber}
-                    onClick={() => setPage(pageNumber)}
-                  >
-                    {pageNumber}
-                  </button>
-                ),
-              )}
-              <button
-                type="button"
-                disabled={page === totalPages}
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-              >
-                Next
-              </button>
+              <button type="button" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+                <button
+                  type="button"
+                  className={pageNumber === page ? "active" : ""}
+                  key={pageNumber}
+                  onClick={() => setPage(pageNumber)}
+                >
+                  {pageNumber}
+                </button>
+              ))}
+              <button type="button" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>Next</button>
             </div>
           </div>
         </section>
