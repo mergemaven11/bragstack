@@ -16,7 +16,8 @@
 .public-controls,
 .public-timeline,
 .sidebar-card,
-.public-notice {
+.public-notice,
+.analytics-shell {
   border: 1px solid rgba(148, 163, 184, 0.18);
   background: rgba(15, 23, 42, 0.72);
   backdrop-filter: blur(18px);
@@ -100,6 +101,227 @@
   font-weight: 800;
 }
 
+.analytics-shell {
+  padding: 28px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.analytics-shell::before {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  right: -180px;
+  top: -180px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 65%);
+  pointer-events: none;
+}
+
+.analytics-heading,
+.chart-card-heading,
+.analytics-kpi,
+.bar-chart-label,
+.skill-bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.analytics-heading {
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.analytics-heading h2,
+.chart-card-heading h3 {
+  margin: 5px 0 0;
+  letter-spacing: -0.04em;
+}
+
+.analytics-heading h2 {
+  font-size: 2rem;
+}
+
+.analytics-heading p:not(.mini-label) {
+  margin: 8px 0 0;
+  color: #94a3b8;
+}
+
+.analytics-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.11);
+  border: 1px solid rgba(196, 181, 253, 0.16);
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.analytics-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.analytics-kpi {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  padding: 18px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.82), rgba(2, 6, 23, 0.54));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.analytics-kpi svg {
+  color: #7dd3fc;
+}
+
+.analytics-kpi span {
+  color: #cbd5e1;
+  font-weight: 800;
+}
+
+.analytics-kpi strong {
+  color: #f8fafc;
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.analytics-kpi small {
+  grid-column: 1 / -1;
+  color: #64748b;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.chart-card {
+  min-width: 0;
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(2, 6, 23, 0.36);
+  border: 1px solid rgba(148, 163, 184, 0.13);
+}
+
+.skills-chart-card {
+  grid-column: 1 / -1;
+}
+
+.chart-card-heading {
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.chart-card-heading h3 {
+  font-size: 1.2rem;
+}
+
+.chart-card-heading > span {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.activity-chart {
+  min-height: 190px;
+}
+
+.activity-chart svg {
+  width: 100%;
+  height: 155px;
+  overflow: visible;
+}
+
+.activity-area {
+  fill: url(#activityFill);
+}
+
+.activity-line {
+  fill: none;
+  stroke: #7dd3fc;
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 7px rgba(56, 189, 248, 0.35));
+}
+
+.activity-dot {
+  fill: #f8fafc;
+  stroke: #38bdf8;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.activity-labels {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.bar-chart-list,
+.skill-bar-grid {
+  display: grid;
+  gap: 13px;
+}
+
+.bar-chart-label,
+.skill-bar-top {
+  margin-bottom: 6px;
+}
+
+.bar-chart-label span,
+.skill-bar-top span {
+  color: #cbd5e1;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.bar-chart-label strong,
+.skill-bar-top strong {
+  color: #f8fafc;
+  font-size: 0.82rem;
+}
+
+.bar-chart-track,
+.skill-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.9);
+  overflow: hidden;
+}
+
+.bar-chart-track span,
+.skill-bar-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #8b5cf6);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.2);
+}
+
+.skill-bar-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .public-notice {
   padding: 14px 18px;
   margin-bottom: 20px;
@@ -133,9 +355,7 @@
   font: inherit;
 }
 
-.search-box input::placeholder {
-  color: #64748b;
-}
+.search-box input::placeholder { color: #64748b; }
 
 .filter-pills {
   display: flex;
@@ -166,9 +386,7 @@
 }
 
 .public-timeline,
-.sidebar-card {
-  padding: 26px;
-}
+.sidebar-card { padding: 26px; }
 
 .timeline-header {
   display: flex;
@@ -205,10 +423,7 @@
   gap: 18px;
 }
 
-.public-entry h3 {
-  margin: 6px 0 0;
-  font-size: 1.25rem;
-}
+.public-entry h3 { margin: 6px 0 0; font-size: 1.25rem; }
 
 .public-entry-meta {
   display: flex;
@@ -246,9 +461,7 @@
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.proof-grid strong {
-  color: #f8fafc;
-}
+.proof-grid strong { color: #f8fafc; }
 
 .proof-grid p {
   color: #cbd5e1;
@@ -273,24 +486,28 @@
   gap: 16px;
 }
 
-.muted {
-  color: #94a3b8;
-}
+.muted { color: #94a3b8; }
 
 @media (max-width: 940px) {
   .public-hero,
-  .public-layout {
+  .public-layout,
+  .analytics-grid {
     grid-template-columns: 1fr;
   }
 
-  .public-entry-top,
-  .timeline-header {
-    flex-direction: column;
-  }
+  .skills-chart-card { grid-column: auto; }
 
-  .public-entry-meta {
-    justify-content: flex-start;
-  }
+  .analytics-kpis { grid-template-columns: 1fr; }
+
+  .public-entry-top,
+  .timeline-header,
+  .analytics-heading { flex-direction: column; }
+
+  .public-entry-meta { justify-content: flex-start; }
+}
+
+@media (max-width: 640px) {
+  .skill-bar-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 540px) {
@@ -303,15 +520,10 @@
   .public-proof-card,
   .public-controls,
   .public-timeline,
-  .sidebar-card {
-    border-radius: 24px;
-  }
+  .sidebar-card,
+  .analytics-shell { border-radius: 24px; }
 
-  .public-hero > div {
-    padding: 26px;
-  }
-
-  .public-hero h1 {
-    font-size: clamp(2.5rem, 15vw, 4rem);
-  }
+  .public-hero > div { padding: 26px; }
+  .public-hero h1 { font-size: clamp(2.5rem, 15vw, 4rem); }
+  .analytics-shell { padding: 20px; }
 }
