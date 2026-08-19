@@ -165,6 +165,19 @@ export async function getCustomCareerReport(startDate, endDate) {
   return response.data;
 }
 
+export async function getPerformancePacket(startDate, endDate) {
+  const params =
+    startDate && endDate
+      ? {
+          start_date: startDate,
+          end_date: endDate,
+        }
+      : undefined;
+
+  const response = await api.get("/reports/performance-packet", { params });
+  return response.data;
+}
+
 export async function getPublicImpactReceipts(slug) {
   const response = await api.get(getPublicBragPath(slug, "/impact-receipts"));
   return response.data;
