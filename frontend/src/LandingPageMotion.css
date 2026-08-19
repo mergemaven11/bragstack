@@ -1,0 +1,190 @@
+/* Lightweight, CSS-only motion for the marketing page. */
+
+@keyframes bragstack-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes bragstack-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes bragstack-glow-drift {
+  0%, 100% {
+    transform: translate3d(-3%, -2%, 0) scale(0.98);
+    opacity: 0.72;
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes bragstack-bar-rise {
+  from {
+    transform: scaleY(0.08);
+    opacity: 0.25;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bragstack-sheen {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  55%, 100% {
+    transform: translateX(240%) skewX(-18deg);
+  }
+}
+
+.landing-hero-copy,
+.landing-proof-preview,
+.landing-use-strip,
+.landing-problem-section,
+.landing-use-cases,
+.landing-workflow,
+.landing-feature-section,
+.landing-pricing,
+.landing-final-cta,
+.mega-footer {
+  animation: bragstack-fade-up 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-proof-preview { animation-delay: 70ms; }
+.landing-use-strip { animation-delay: 110ms; }
+.landing-problem-section { animation-delay: 140ms; }
+.landing-use-cases { animation-delay: 170ms; }
+.landing-workflow { animation-delay: 200ms; }
+.landing-feature-section { animation-delay: 230ms; }
+.landing-pricing { animation-delay: 260ms; }
+.landing-final-cta { animation-delay: 290ms; }
+.mega-footer { animation-delay: 320ms; }
+
+.preview-glow {
+  animation: bragstack-glow-drift 8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.floating-proof-card {
+  animation: bragstack-float 5.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.floating-proof-bottom {
+  animation-delay: -2.7s;
+}
+
+.proof-preview-card,
+.workflow-card,
+.use-case-card,
+.pro-output-grid article,
+.pricing-card,
+.feature-dashboard-preview,
+.mock-analytics-panel {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.proof-preview-card:hover,
+.feature-dashboard-preview:hover,
+.mock-analytics-panel:hover {
+  transform: translate3d(0, -4px, 0);
+  border-color: rgba(166, 220, 255, 0.34);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.3);
+}
+
+.workflow-card:hover,
+.use-case-card:hover,
+.pro-output-grid article:hover,
+.pricing-card:hover {
+  transform: translate3d(0, -5px, 0);
+  border-color: rgba(173, 145, 255, 0.34);
+}
+
+.pricing-card-pro:hover {
+  transform: translate3d(0, -14px, 0);
+}
+
+.landing-btn,
+.sidebar-add {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.landing-btn::after {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -25%;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: bragstack-sheen 5.8s ease-in-out infinite;
+}
+
+.mock-chart > div > span {
+  transform-origin: bottom;
+  animation: bragstack-bar-rise 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform;
+}
+
+.mock-chart > div:nth-child(2) > span { animation-delay: 60ms; }
+.mock-chart > div:nth-child(3) > span { animation-delay: 120ms; }
+.mock-chart > div:nth-child(4) > span { animation-delay: 180ms; }
+.mock-chart > div:nth-child(5) > span { animation-delay: 240ms; }
+.mock-chart > div:nth-child(6) > span { animation-delay: 300ms; }
+
+.career-flow span,
+.proof-preview-tags span,
+.feature-preview-tags span {
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.career-flow span:hover,
+.proof-preview-tags span:hover,
+.feature-preview-tags span:hover {
+  transform: translate3d(0, -2px, 0);
+  border-color: rgba(166, 220, 255, 0.35);
+}
+
+.mega-footer-columns a {
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.mega-footer-columns a:hover {
+  transform: translateX(3px);
+}
+
+@media (max-width: 1080px) {
+  .pricing-card-pro:hover {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
