@@ -37,7 +37,8 @@ function PacketBuilderPanel({
   isLoading,
   error,
 }) {
-  const isPromotion = options.packetType === "promotion";
+  const packetType = options.packetType || "performance-review";
+  const isPromotion = packetType === "promotion";
 
   function update(name, value) {
     onChange((current) => ({
@@ -69,7 +70,7 @@ function PacketBuilderPanel({
         <label>
           <span>Packet type</span>
           <select
-            value={options.packetType}
+            value={packetType}
             onChange={(event) => update("packetType", event.target.value)}
           >
             {PACKET_TYPES.map((type) => (
@@ -83,7 +84,7 @@ function PacketBuilderPanel({
         <label>
           <span>Career / work area</span>
           <select
-            value={options.careerArea}
+            value={options.careerArea ?? ""}
             onChange={(event) => update("careerArea", event.target.value)}
           >
             {CAREER_AREAS.map((area) => (
@@ -98,7 +99,7 @@ function PacketBuilderPanel({
           <span>Current role title</span>
           <input
             type="text"
-            value={options.roleTitle}
+            value={options.roleTitle ?? ""}
             onChange={(event) => update("roleTitle", event.target.value)}
             placeholder="Use profile headline"
             maxLength={160}
@@ -109,7 +110,7 @@ function PacketBuilderPanel({
           <span>Organization / team</span>
           <input
             type="text"
-            value={options.organization}
+            value={options.organization ?? ""}
             onChange={(event) => update("organization", event.target.value)}
             placeholder="Optional"
             maxLength={180}
@@ -122,7 +123,7 @@ function PacketBuilderPanel({
               <span>Target role</span>
               <input
                 type="text"
-                value={options.targetRole}
+                value={options.targetRole ?? ""}
                 onChange={(event) => update("targetRole", event.target.value)}
                 placeholder="Example: Senior Manager, Lead Teacher, RN II"
                 maxLength={160}
@@ -133,7 +134,7 @@ function PacketBuilderPanel({
               <span>Target level / progression</span>
               <input
                 type="text"
-                value={options.targetLevel}
+                value={options.targetLevel ?? ""}
                 onChange={(event) => update("targetLevel", event.target.value)}
                 placeholder="Optional level, grade, title, or progression step"
                 maxLength={120}
@@ -147,7 +148,7 @@ function PacketBuilderPanel({
         <label className="packet-confidential-toggle">
           <input
             type="checkbox"
-            checked={options.confidential}
+            checked={options.confidential !== false}
             onChange={(event) => update("confidential", event.target.checked)}
           />
           <span>
