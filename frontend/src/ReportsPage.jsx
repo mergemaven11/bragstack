@@ -28,9 +28,15 @@ const REPORT_TYPES = [
 ];
 
 const DEFAULT_PACKET_OPTIONS = {
+  packetType: "performance-review",
   careerArea: "",
   roleTitle: "",
   organization: "",
+  targetRole: "",
+  targetLevel: "",
+  targetOrganization: "",
+  selectedEntryIds: [],
+  includeEvidenceReferences: false,
   confidential: true,
 };
 
@@ -147,6 +153,10 @@ function ReportsPage() {
       setReport(data);
       setPacket(null);
       setShowPacket(false);
+      setPacketOptions((current) => ({
+        ...current,
+        selectedEntryIds: [],
+      }));
     } catch (requestError) {
       console.error(requestError);
       if (requestError.response?.status === 401) {
@@ -271,14 +281,21 @@ function ReportsPage() {
         return;
       }
 
+      const packetLabel =
+        packetOptions.packetType === "promotion"
+          ? "Promotion Packets"
+          : packetOptions.packetType === "interview"
+            ? "Interview Packets"
+            : "Performance Review Packets";
+
       if (requestError.response?.status === 403) {
         setPacketError(
-          "Performance Review Packets are included with BragStack Pro. Your standard career reports remain available on Free."
+          `${packetLabel} are included with BragStack Pro. Your standard career reports remain available on Free.`
         );
       } else {
         setPacketError(
           requestError.response?.data?.detail ??
-            "The Performance Review Packet could not be built."
+            `The ${packetLabel.replace(/s$/, "")} could not be built.`
         );
       }
     } finally {
@@ -377,6 +394,7 @@ function ReportsPage() {
             onBuild={() => void handleBuildPacket()}
             isLoading={isPacketLoading}
             error={packetError}
+            highlights={report.highlights ?? []}
           />
 
           <section className="report-export-bar" aria-label="Report exports">
