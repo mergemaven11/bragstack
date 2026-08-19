@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth_routes import router as auth_router
 from app.impact_receipt_routes import router as impact_receipts_router
+from app.interview_packet_export_routes import router as interview_packet_export_router
+from app.interview_packet_routes import router as interview_packet_router
 from app.performance_packet_export_routes import router as performance_packet_export_router
 from app.performance_packet_routes import router as performance_packet_router
 from app.promotion_packet_export_routes import router as promotion_packet_export_router
@@ -40,6 +42,8 @@ app.include_router(performance_packet_router)
 app.include_router(performance_packet_export_router)
 app.include_router(promotion_packet_router)
 app.include_router(promotion_packet_export_router)
+app.include_router(interview_packet_router)
+app.include_router(interview_packet_export_router)
 
 
 @app.get("/")
