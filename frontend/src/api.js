@@ -28,7 +28,7 @@ function getPacketParams(startDate, endDate, options = {}) {
     ...(options.reviewType ? { review_type: options.reviewType } : {}),
     ...(options.requirementNotes ? { requirement_notes: options.requirementNotes } : {}),
     ...(options.signatureEntryIds?.length ? { signature_entry_ids: options.signatureEntryIds.join(",") } : {}),
-    ...(options.sections?.length ? { sections: options.sections.join(",") } : {}),
+    ...(Array.isArray(options.sections) ? { sections: options.sections.length ? options.sections.join(",") : "__none__" } : {}),
     ...(options.packetNote ? { packet_note: options.packetNote } : {}),
     ...(options.itemNotes && Object.keys(options.itemNotes).length ? { item_notes: JSON.stringify(options.itemNotes) } : {}),
     ...(options.theme ? { theme: options.theme } : {}),
