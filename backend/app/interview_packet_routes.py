@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.auth import get_current_user
 from app.database import impact_receipts_collection
+from app.packet_platform import normalize_recognition
 from app.performance_packet_routes import (
     _build_packet,
     _clean_string,
@@ -28,13 +29,11 @@ DEFAULT_INTERVIEW_STORIES = 5
 def _parse_selected_ids(value: str | None) -> list[str]:
     if not value:
         return []
-
     selected: list[str] = []
     for item in value.split(","):
         entry_id = item.strip()
         if entry_id and entry_id not in selected:
             selected.append(entry_id)
-
     if len(selected) > MAX_INTERVIEW_STORIES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -83,13 +82,8 @@ def _build_interview_packet(
     )["packet"]
 
     user_id = str(current_user["_id"])
-    entries = _entries_for_period(
-        user_id=user_id,
-        start_date=start_date,
-        end_date=end_date,
-    )
+    entries = _entries_for_period(user_id=user_id, start_date=start_date, end_date=end_date)
     entries_by_id = {str(entry["_id"]): entry for entry in entries}
-
     receipts = list(impact_receipts_collection.find({"user_id": user_id}))
     receipts_by_source = {
         str(receipt.get("source_entry_id")): receipt
@@ -105,12 +99,12 @@ def _build_interview_packet(
             for item in base.get("signature_accomplishments", [])[:DEFAULT_INTERVIEW_STORIES]
             if item.get("entry_id") in entries_by_id
         ]
-
     if not selected_ids and entries:
         selected_ids = [str(entry["_id"]) for entry in entries[:DEFAULT_INTERVIEW_STORIES]]
 
     categories: Counter[str] = Counter()
     skills: Counter[str] = Counter()
+    recognition_types: Counter[str] = Counter()
     stories: list[dict[str, Any]] = []
 
     for entry_id in selected_ids:
@@ -118,18 +112,15 @@ def _build_interview_packet(
         receipt = receipts_by_source.get(entry_id)
         work_date = _entry_work_date(entry)
         contribution = _clean_string(receipt.get("contribution")) if receipt else ""
-        result = _clean_string(
-            receipt.get("result") if receipt else entry.get("impact")
-        )
-        skill_values = (
-            receipt.get("skills", [])
-            if receipt and receipt.get("skills")
-            else entry.get("tags", [])
-        )
+        result = _clean_string(receipt.get("result") if receipt else entry.get("impact"))
+        skill_values = receipt.get("skills", []) if receipt and receipt.get("skills") else entry.get("tags", [])
         clean_skills = [_clean_string(value) for value in skill_values if _clean_string(value)]
         evidence = receipt.get("evidence", []) if receipt else []
         confirmations = receipt.get("confirmations", []) if receipt else []
-        verified = any(item.get("status") == "confirmed" for item in confirmations)
+        recognition = normalize_recognition(confirmations, receipt.get("trust_signals", []) if receipt else [])
+        for item in recognition:
+            recognition_types[item["label"]] += 1
+        verified = bool(recognition)
         category = _clean_string(entry.get("category"), "Accomplishment")
         categories[category] += 1
         skills.update(clean_skills)
@@ -157,9 +148,10 @@ def _build_interview_packet(
             "evidence_count": len(evidence),
             "evidence": evidence_details,
             "verified": verified,
+            "recognition": recognition,
             "proof_status": (
-                "Verified"
-                if verified
+                recognition[0]["label"]
+                if recognition
                 else "Evidence-backed"
                 if evidence
                 else "Documented"
@@ -170,7 +162,7 @@ def _build_interview_packet(
 
     receipts_count = sum(1 for story in stories if story["has_receipt"])
     evidence_count = sum(story["evidence_count"] for story in stories)
-    verified_count = sum(1 for story in stories if story["verified"])
+    recognized_count = sum(1 for story in stories if story["recognition"])
     quantified_count = sum(1 for story in stories if _has_quantified_result(story["result"]))
     stories_with_evidence = sum(1 for story in stories if story["evidence_count"] > 0)
 
@@ -181,10 +173,10 @@ def _build_interview_packet(
         "skills_demonstrated": len(skills),
         "receipt_coverage_percent": _percentage(receipts_count, len(stories)),
         "quantified_result_coverage_percent": _percentage(quantified_count, len(stories)),
-        "verification_coverage_percent": _percentage(verified_count, len(stories)),
+        "verification_coverage_percent": _percentage(recognized_count, len(stories)),
         "evidence_coverage_percent": _percentage(stories_with_evidence, len(stories)),
         "evidence_depth": round(evidence_count / receipts_count, 1) if receipts_count else 0,
-        "confirmed_assertions": verified_count,
+        "confirmed_assertions": recognized_count,
     }
 
     target_role_value = _clean_string(target_role)
@@ -199,37 +191,28 @@ def _build_interview_packet(
     if target_text:
         summary_parts.append(f"The packet is framed for conversations related to {target_text}.")
     if quantified_count:
-        summary_parts.append(
-            f"{quantified_count} selected stor{'ies' if quantified_count != 1 else 'y'} include a measurable result."
-        )
-    summary_parts.append(
-        "Story prompts are based only on documented fields; missing context is surfaced as a preparation question rather than invented."
-    )
+        summary_parts.append(f"{quantified_count} selected stor{'ies' if quantified_count != 1 else 'y'} include a measurable result.")
+    if recognized_count:
+        summary_parts.append(f"{recognized_count} selected stor{'ies have' if recognized_count != 1 else 'y has'} Verified Recognition attached.")
+    summary_parts.append("Story prompts are based only on documented fields; missing context is surfaced as a preparation question rather than invented.")
 
     interview_summary = " ".join(summary_parts)
-    skill_details = [
-        {"skill": skill, "count": count}
-        for skill, count in skills.most_common(12)
-    ]
+    skill_details = [{"skill": skill, "count": count} for skill, count in skills.most_common(12)]
 
     base.update(
         {
             "kind": "interview",
             "title": "Interview Packet",
-            "target": {
-                "role": target_role_value,
-                "organization": target_org_value,
-            },
+            "target": {"role": target_role_value, "organization": target_org_value},
             "scorecard": scorecard,
             "signature_accomplishments": stories,
             "interview_stories": stories,
-            "measurable_results": [
-                story for story in stories if _has_quantified_result(story.get("result", ""))
-            ],
+            "measurable_results": [story for story in stories if _has_quantified_result(story.get("result", ""))],
             "skill_details": skill_details,
             "impact_analytics": {
                 "top_skills": dict(skills.most_common(8)),
                 "categories": dict(categories.most_common(8)),
+                "recognition": dict(recognition_types.most_common()),
             },
             "receipt_records": [],
             "evidence_index": [],
@@ -242,7 +225,6 @@ def _build_interview_packet(
             },
         }
     )
-
     return {"packet": base}
 
 
@@ -261,7 +243,6 @@ def get_interview_packet(
     current_user: dict = Depends(get_current_user),
 ):
     """Build a career-neutral interview packet from user-selected accomplishments."""
-
     parsed_start, parsed_end = _parse_period(start_date, end_date)
     return _build_interview_packet(
         current_user=current_user,
