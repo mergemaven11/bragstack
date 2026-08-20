@@ -1,0 +1,132 @@
+.packet-preview-shell {
+  --packet-accent: #173f43;
+  --packet-accent-2: #1f5559;
+  --packet-highlight: #b68b4c;
+  --packet-paper: #fffefa;
+  --packet-ink: #172126;
+  --packet-muted: #667176;
+  --packet-soft: #f3f1ea;
+  --packet-line: #dedad0;
+  --packet-display-font: Georgia, "Times New Roman", serif;
+}
+
+.packet-preview-shell.packet-theme-modern-minimal,
+.packet-theme-modern-minimal {
+  --packet-accent: #243b53;
+  --packet-accent-2: #3e7c8f;
+  --packet-highlight: #3e7c8f;
+  --packet-paper: #ffffff;
+  --packet-ink: #16202a;
+  --packet-muted: #697986;
+  --packet-soft: #f3f7f9;
+  --packet-line: #d9e2e8;
+  --packet-display-font: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.packet-preview-shell.packet-theme-executive-report,
+.packet-theme-executive-report {
+  --packet-accent: #342a32;
+  --packet-accent-2: #6c4d5a;
+  --packet-highlight: #8a5a44;
+  --packet-paper: #fffdfc;
+  --packet-ink: #211c20;
+  --packet-muted: #726a70;
+  --packet-soft: #f5f1f0;
+  --packet-line: #ddd5d2;
+  --packet-display-font: Georgia, "Times New Roman", serif;
+}
+
+.packet-theme-classic-dossier,
+.packet-theme-modern-minimal,
+.packet-theme-executive-report {
+  background-color: var(--packet-paper);
+  color: var(--packet-ink);
+}
+
+.packet-theme-modern-minimal .packet-cover-main h1,
+.packet-theme-modern-minimal .packet-cover-main h2,
+.packet-theme-modern-minimal .packet-page-header h2,
+.packet-theme-modern-minimal .packet-accomplishment-record h3,
+.packet-theme-modern-minimal .packet-result-grid h3,
+.packet-theme-modern-minimal .packet-receipt-card h3 {
+  font-family: var(--packet-display-font);
+  letter-spacing: -0.025em;
+}
+
+.packet-theme-executive-report .packet-cover-rule,
+.packet-theme-modern-minimal .packet-cover-rule {
+  background: var(--packet-highlight);
+}
+
+.packet-theme-modern-minimal .packet-wordmark-mark,
+.packet-theme-executive-report .packet-wordmark-mark,
+.packet-theme-modern-minimal .packet-signature-icon,
+.packet-theme-executive-report .packet-signature-icon {
+  background: var(--packet-accent);
+}
+
+.packet-theme-modern-minimal .packet-page-header-mark,
+.packet-theme-executive-report .packet-page-header-mark,
+.packet-theme-modern-minimal .packet-document-type,
+.packet-theme-executive-report .packet-document-type,
+.packet-theme-modern-minimal .packet-section-kicker,
+.packet-theme-executive-report .packet-section-kicker {
+  color: var(--packet-accent);
+}
+
+.packet-theme-modern-minimal .packet-coverage-track span,
+.packet-theme-executive-report .packet-coverage-track span,
+.packet-theme-modern-minimal .packet-ranked-track span,
+.packet-theme-executive-report .packet-ranked-track span,
+.packet-theme-modern-minimal .packet-horizontal-bar-track span,
+.packet-theme-executive-report .packet-horizontal-bar-track span,
+.packet-theme-modern-minimal .packet-skill-track span,
+.packet-theme-executive-report .packet-skill-track span {
+  background: var(--packet-accent-2);
+}
+
+.packet-theme-modern-minimal .packet-kpi-ribbon,
+.packet-theme-executive-report .packet-kpi-ribbon,
+.packet-theme-modern-minimal .packet-document-note,
+.packet-theme-executive-report .packet-document-note,
+.packet-theme-modern-minimal .packet-growth-callout,
+.packet-theme-executive-report .packet-growth-callout {
+  background: var(--packet-soft);
+  border-color: var(--packet-line);
+}
+
+.packet-user-note {
+  margin-top: 9px;
+  padding: 10px 12px;
+  border: 1px solid var(--packet-line, #dedad0);
+  border-left: 3px solid var(--packet-highlight, #b68b4c);
+  border-radius: 9px;
+  background: var(--packet-soft, #f3f1ea);
+}
+.packet-user-note strong { display: block; color: var(--packet-ink, #172126); font-size: 10px; }
+.packet-user-note p { margin: 4px 0; color: var(--packet-muted, #667176); font-size: 10px; line-height: 1.45; }
+.packet-user-note small { color: var(--packet-muted, #667176); font-size: 8.5px; font-style: italic; }
+.packet-cover-note { max-width: 600px; }
+
+.packet-recognition-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.packet-recognition-list span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--packet-accent, #173f43) 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--packet-accent, #173f43) 7%, white);
+  color: var(--packet-accent, #173f43);
+  padding: 4px 7px;
+  font-size: 8.5px;
+  font-weight: 750;
+}
+
+@media print {
+  .packet-share-panel { display: none !important; }
+  .packet-preview-shell { background: white !important; }
+}
