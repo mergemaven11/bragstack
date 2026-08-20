@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
 from app.auth import get_current_user
+from app.packet_audit import record_packet_export
 from app.performance_packet_routes import _parse_period
 from app.plans import require_feature
 from app.promotion_packet_pdf import build_promotion_packet_pdf, make_promotion_packet_filename
@@ -45,6 +46,12 @@ def download_promotion_packet_pdf(
 
     pdf_bytes = build_promotion_packet_pdf(packet)
     filename = make_promotion_packet_filename(packet)
+    record_packet_export(
+        user_id=str(current_user["_id"]),
+        packet=packet,
+        filename=filename,
+        pdf_bytes=pdf_bytes,
+    )
 
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
