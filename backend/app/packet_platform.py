@@ -41,9 +41,11 @@ def parse_csv(value: str | None, *, max_items: int = 50) -> list[str]:
 
 
 def parse_sections(value: str | None) -> list[str]:
-    requested = parse_csv(value, max_items=len(OPTIONAL_SECTIONS))
-    if not requested:
+    if value == "__none__":
+        return []
+    if value is None or value == "":
         return list(OPTIONAL_SECTIONS)
+    requested = parse_csv(value, max_items=len(OPTIONAL_SECTIONS))
     return [section for section in OPTIONAL_SECTIONS if section in requested]
 
 
@@ -158,7 +160,7 @@ def apply_packet_platform(
     review_cycle_label: str | None = None,
 ) -> dict[str, Any]:
     result = deepcopy(packet)
-    selected_sections = sections or list(OPTIONAL_SECTIONS)
+    selected_sections = list(OPTIONAL_SECTIONS) if sections is None else sections
     selected_sections = [key for key in OPTIONAL_SECTIONS if key in selected_sections]
     theme_name = theme if theme in PACKET_THEMES else "classic-dossier"
 
