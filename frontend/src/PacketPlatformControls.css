@@ -1,0 +1,27 @@
+.packet-platform-grid { margin-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.packet-platform-panel { border: 1px solid #dde2df; border-radius: 16px; background: #f9fbfa; padding: 16px; min-width: 0; }
+.packet-platform-heading { display: flex; gap: 9px; align-items: flex-start; color: #173f43; }
+.packet-platform-heading div { display: grid; gap: 2px; }
+.packet-platform-heading strong { font-size: 13px; }
+.packet-platform-heading span { color: #778086; font-size: 10px; font-weight: 600; }
+.packet-platform-help { margin: 9px 0 0; color: #707a80; font-size: 10.5px; line-height: 1.45; }
+.packet-signature-options { max-height: 360px; }
+.packet-signature-option { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; border: 1px solid transparent; border-radius: 12px; }
+.packet-signature-option.selected { background: #f1f7f5; border-color: rgba(31, 85, 89, .28); }
+.packet-signature-option label { border: 0; background: transparent; }
+.packet-reorder { display: grid; grid-template-columns: 28px 22px 28px; gap: 2px; align-items: center; padding-right: 8px; }
+.packet-reorder button { width: 28px; height: 28px; border: 1px solid #d8ddda; border-radius: 8px; background: white; color: #173f43; display: grid; place-items: center; cursor: pointer; }
+.packet-reorder button:disabled { opacity: .35; cursor: default; }
+.packet-reorder span { text-align: center; font-size: 10px; font-weight: 850; color: #5d686e; }
+.packet-section-checks { margin-top: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.packet-section-checks label { display: flex; gap: 8px; align-items: flex-start; padding: 9px 10px; border: 1px solid #e1e5e3; border-radius: 10px; background: white; color: #465158; font-size: 10.5px; font-weight: 700; cursor: pointer; }
+.packet-section-checks input { accent-color: #173f43; margin-top: 1px; }
+.packet-platform-field { margin-top: 11px; display: grid; gap: 6px; }
+.packet-platform-field > span { color: #58636a; font-size: 10.5px; font-weight: 750; }
+.packet-platform-field input, .packet-platform-field select, .packet-platform-field textarea { width: 100%; box-sizing: border-box; border: 1px solid #d9dddb; border-radius: 10px; background: white; padding: 9px 10px; font: inherit; font-size: 11px; color: #263137; }
+.packet-platform-field textarea { resize: vertical; line-height: 1.45; }
+.packet-platform-field input:focus, .packet-platform-field select:focus, .packet-platform-field textarea:focus { outline: 2px solid rgba(31,85,89,.15); border-color: #1f5559; }
+.packet-platform-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+.packet-item-notes { margin-top: 10px; max-height: 220px; overflow-y: auto; padding-right: 3px; }
+@media (max-width: 900px) { .packet-platform-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .packet-section-checks, .packet-platform-two { grid-template-columns: 1fr; } .packet-signature-option { grid-template-columns: 1fr; } .packet-reorder { padding: 0 10px 10px 38px; } }
