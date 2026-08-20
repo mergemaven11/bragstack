@@ -1,3 +1,5 @@
+@import "./PacketPlatformControls.css";
+
 .packet-builder-pro {
   margin: 22px 0 26px;
   padding: 24px;
@@ -9,59 +11,18 @@
   box-shadow: 0 18px 48px rgba(23, 32, 42, 0.07);
 }
 
-.packet-builder-pro-header {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
-  align-items: start;
-}
-
-.packet-builder-pro-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  background: #173f43;
-  color: white;
-}
-
-.packet-builder-pro-header span {
-  display: block;
-  margin-bottom: 5px;
-  color: #1c575a;
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
+.packet-builder-pro-header { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; }
+.packet-builder-pro-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #173f43; color: white; }
+.packet-builder-pro-header span { display: block; margin-bottom: 5px; color: #1c575a; font-size: 10px; font-weight: 850; letter-spacing: 0.11em; text-transform: uppercase; }
 .packet-builder-pro-header h2 { margin: 0; font-size: 23px; }
 .packet-builder-pro-header p { margin: 7px 0 0; max-width: 760px; color: #657077; line-height: 1.55; }
 .packet-builder-fields { margin-top: 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .packet-builder-fields label { display: grid; gap: 7px; }
 .packet-builder-fields label > span { color: #4e5960; font-size: 12px; font-weight: 750; }
 .packet-builder-wide-field { grid-column: 1 / -1; }
-
-.packet-builder-fields input,
-.packet-builder-fields select,
-.packet-builder-fields textarea {
-  width: 100%;
-  min-height: 42px;
-  border: 1px solid #d9dde0;
-  border-radius: 11px;
-  background: white;
-  color: #17202a;
-  padding: 0 11px;
-  font: inherit;
-  font-size: 13px;
-}
-
+.packet-builder-fields input, .packet-builder-fields select, .packet-builder-fields textarea { width: 100%; box-sizing: border-box; min-height: 42px; border: 1px solid #d9dde0; border-radius: 11px; background: white; color: #17202a; padding: 0 11px; font: inherit; font-size: 13px; }
 .packet-builder-fields textarea { padding: 10px 11px; resize: vertical; line-height: 1.45; }
-.packet-builder-fields input:focus,
-.packet-builder-fields select:focus,
-.packet-builder-fields textarea:focus { outline: 2px solid rgba(31, 85, 89, 0.18); border-color: #1f5559; }
-
+.packet-builder-fields input:focus, .packet-builder-fields select:focus, .packet-builder-fields textarea:focus { outline: 2px solid rgba(31, 85, 89, 0.18); border-color: #1f5559; }
 .packet-story-picker { margin-top: 18px; padding: 16px; border: 1px solid #dde2df; border-radius: 16px; background: #f8faf8; }
 .packet-story-picker-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .packet-story-picker-heading span { display: block; color: #1f5559; font-size: 10px; font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -86,12 +47,4 @@
 .packet-builder-pro-action button { border: 0; border-radius: 12px; background: #173f43; color: white; padding: 12px 16px; font: inherit; font-size: 13px; font-weight: 850; cursor: pointer; box-shadow: 0 10px 26px rgba(23, 63, 67, 0.18); }
 .packet-builder-pro-action button:disabled { cursor: wait; opacity: 0.7; }
 .packet-builder-pro-error { margin: 14px 0 0; padding: 11px 13px; border: 1px solid rgba(139, 87, 36, 0.22); border-radius: 11px; background: #fff8eb; color: #714b22; font-size: 12px; }
-
-@media (max-width: 800px) {
-  .packet-builder-fields { grid-template-columns: 1fr; }
-  .packet-builder-wide-field { grid-column: auto; }
-  .packet-story-picker-heading { flex-direction: column; }
-  .packet-builder-pro-footer { align-items: stretch; flex-direction: column; }
-  .packet-builder-pro-action { align-items: stretch; flex-direction: column; }
-  .packet-builder-pro-action button { width: 100%; }
-}
+@media (max-width: 800px) { .packet-builder-fields { grid-template-columns: 1fr; } .packet-builder-wide-field { grid-column: auto; } .packet-story-picker-heading { flex-direction: column; } .packet-builder-pro-footer { align-items: stretch; flex-direction: column; } .packet-builder-pro-action { align-items: stretch; flex-direction: column; } .packet-builder-pro-action button { width: 100%; } }
