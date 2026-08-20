@@ -1,0 +1,26 @@
+.packet-share-panel { max-width: 816px; margin: 0 auto 18px; padding: 16px 18px; border: 1px solid #d9dfdc; border-radius: 14px; background: rgba(255,255,255,.96); box-shadow: 0 10px 32px rgba(20,32,36,.06); }
+.packet-share-heading { display: flex; gap: 9px; align-items: flex-start; color: #173f43; }
+.packet-share-heading div { display: grid; gap: 2px; }
+.packet-share-heading strong { font-size: 13px; }
+.packet-share-heading span { color: #748087; font-size: 10px; }
+.packet-share-grid { margin-top: 12px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.packet-share-grid label { display: grid; gap: 5px; }
+.packet-share-grid span { color: #59656b; font-size: 10px; font-weight: 750; }
+.packet-share-grid input { min-height: 38px; border: 1px solid #d9dddb; border-radius: 9px; padding: 0 10px; font: inherit; font-size: 11px; }
+.packet-share-checks { margin-top: 11px; display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.packet-share-checks label { display: flex; gap: 6px; align-items: center; color: #4e5a60; font-size: 10.5px; font-weight: 700; }
+.packet-share-checks input { accent-color: #173f43; }
+.packet-share-privacy { margin: 11px 0; display: flex; gap: 6px; align-items: flex-start; color: #69747a; font-size: 10px; line-height: 1.45; }
+.packet-share-create, .packet-share-actions button { border: 0; border-radius: 9px; padding: 9px 12px; background: #173f43; color: white; font: inherit; font-size: 10.5px; font-weight: 800; cursor: pointer; }
+.packet-share-created { margin-top: 12px; }
+.packet-share-created > div:first-child { display: grid; gap: 4px; }
+.packet-share-created span { color: #647178; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+.packet-share-created a { color: #1f5559; font-size: 11px; overflow-wrap: anywhere; }
+.packet-share-created > p { color: #68737a; font-size: 10px; }
+.packet-share-actions { display: flex; gap: 8px; }
+.packet-share-actions button { display: inline-flex; align-items: center; gap: 5px; }
+.packet-share-actions button.danger { background: #7b3c3c; }
+.packet-share-notice, .packet-share-error { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; font-size: 10px; }
+.packet-share-notice { background: #eef7f3; color: #295d4f; }
+.packet-share-error { background: #fff1ee; color: #823f36; }
+@media(max-width:650px){.packet-share-grid{grid-template-columns:1fr}.packet-share-actions{flex-direction:column}.packet-share-actions button{justify-content:center}}
