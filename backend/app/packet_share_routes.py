@@ -85,9 +85,8 @@ def _validate_share(item: dict[str, Any] | None, access_code: str | None) -> dic
     if expires_at and expires_at <= datetime.now(timezone.utc):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared packet not found")
     code_hash = item.get("access_code_hash")
-    if code_hash:
-        if not access_code or not verify_password(access_code, code_hash):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Access code required")
+    if code_hash and (not access_code or not verify_password(access_code, code_hash)):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Access code required")
     return item
 
 
@@ -110,11 +109,12 @@ def _build_shared_packet(item: dict[str, Any]) -> tuple[dict[str, Any], dict[str
         organization=options.get("organization"),
         confidential=bool(options.get("confidential", True)),
     )["packet"]
+    selected_sections = options["sections"] if "sections" in options else list(OPTIONAL_SECTIONS)
     packet = apply_packet_platform(
         packet,
         signature_entry_ids=options.get("signature_entry_ids") or [],
         signature_candidates=_signature_candidates(current_user=owner, start_date=parsed_start, end_date=parsed_end),
-        sections=options.get("sections") or list(OPTIONAL_SECTIONS),
+        sections=selected_sections,
         packet_note=options.get("packet_note"),
         item_notes=options.get("item_notes") or {},
         include_notes=bool(item.get("include_notes")),
@@ -142,7 +142,7 @@ def _shared_html(packet: dict[str, Any], *, allow_download: bool, token: str, ac
     download = ""
     if allow_download:
         code_param = f"?code={escape(access_code or '')}" if access_code else ""
-        download = f'<a class="download" rel="nofollow" href="/shared/packets/{escape(token)}.pdf{code_param}">Download PDF</a>'
+        download = f'<a class="download" rel="nofollow" href="/shared/packets/{escape(token)}/download.pdf{code_param}">Download PDF</a>'
     accomplishments = "".join(
         f'<article><small>{escape(str(item.get("category") or "Accomplishment"))}</small><h3>{escape(str(item.get("title") or ""))}</h3><p>{escape(str(item.get("result") or ""))}</p></article>'
         for item in signatures[:8]
@@ -237,7 +237,7 @@ def view_shared_packet(token: str, code: str | None = Query(None, max_length=64)
     )
 
 
-@router.get("/shared/packets/{token}.pdf")
+@router.get("/shared/packets/{token}/download.pdf")
 def download_shared_packet(token: str, code: str | None = Query(None, max_length=64)):
     item = _validate_share(packet_shares_collection.find_one({"token_hash": _token_hash(token)}), code)
     if not item.get("allow_download"):
