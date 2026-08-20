@@ -146,6 +146,7 @@ def apply_packet_platform(
     packet: dict[str, Any],
     *,
     signature_entry_ids: list[str] | None = None,
+    signature_candidates: list[dict[str, Any]] | None = None,
     sections: list[str] | None = None,
     packet_note: str | None = None,
     item_notes: dict[str, str] | None = None,
@@ -162,17 +163,18 @@ def apply_packet_platform(
     theme_name = theme if theme in PACKET_THEMES else "classic-dossier"
 
     requested_ids = [value for value in (signature_entry_ids or []) if value]
+    candidates = signature_candidates or []
+    result["signature_candidates"] = deepcopy(candidates)
     if requested_ids:
         all_items = {
             str(item.get("entry_id")): item
-            for item in (result.get("signature_accomplishments", []) or [])
+            for item in [
+                *(result.get("signature_accomplishments", []) or []),
+                *(result.get("measurable_results", []) or []),
+                *candidates,
+            ]
             if item.get("entry_id")
         }
-        # The base packet only keeps its top 8 signature records. Pull any other
-        # requested entry from measurable results if it is present there.
-        for item in result.get("measurable_results", []) or []:
-            if item.get("entry_id"):
-                all_items.setdefault(str(item["entry_id"]), item)
         ordered = [all_items[entry_id] for entry_id in requested_ids if entry_id in all_items]
         result["signature_accomplishments"] = ordered
         result["talking_points"] = [
